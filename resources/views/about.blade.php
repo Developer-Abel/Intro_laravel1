@@ -1,1 +1,7 @@
-<h1>a cerca de </h1>
+@extends('plantilla')
+
+@section('title','A cerca')
+
+@section('content')
+   <h1>A  cerca</h1>
+@endsection

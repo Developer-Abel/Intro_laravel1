@@ -9,7 +9,7 @@ Route::view('/','home')->name('inicio');
 Route::view('/about','about')->name('acerca');
 Route::view('/portfolio','portfolio')->name('portafolio');
 Route::view('/contact','contact')->name('contacto');
-
+```
 ```html
 <nav>
     <ul>
@@ -19,5 +19,5 @@ Route::view('/contact','contact')->name('contacto');
     <li><a href="{{route('contacto')}}">Contacto</a></li>
     </ul>
 </nav>
-
+```
 Para que esto funcione en los **href** se inserta le **route** 

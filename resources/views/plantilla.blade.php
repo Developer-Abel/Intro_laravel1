@@ -7,7 +7,7 @@
          <ul>
             <li><a href="/">Home</a></li>
             <li><a href="/about">About</a></li>
-            <li><a href="{{url('portafolio')}}">Portafolio</a></li>
+            <li><a href="{{url('portfolio')}}">Portafolio</a></li>
             <li><a href="{{url('contact')}}">Contacto</a></li>
          </ul>
       </nav>

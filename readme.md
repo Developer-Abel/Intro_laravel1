@@ -79,3 +79,208 @@ Por ultimo **@section()** que es la seccion donde vamos a ingresar el contenido 
 @endsection
 ```
 En la primera sección se ingreso 2 parametros ya que esta haciendo referencia al **yield title**, y como es un contenido corto se puede pasar como segundo parametro y asi ya no utilizamos el cierre de la sección, ahora en la segunda seccion que hace referencia al **yields content** no ponemos otro valor como segundo parametro la que si no lo definimos en la plantilla, a su vez ingresamos el contenido y cerramos la seccion.
+
+### Estructuras de control y mas
+
+En el archivo web (donde se concentran las rutas) por el momento vamos a crear un array con proyectos y lo vamos a pasar por **compact()** en la ruta.
+
+```php
+$portafolio =[
+    ['title'=>'Proyecto 1'],
+    ['title'=>'Proyecto 2'],
+    ['title'=>'Proyecto 3'],
+    ['title'=>'Proyecto 4'],
+];
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::view('/portfolio','portfolio', compact('portafolio'))->name('portafolio');
+```
+#### forech
+La estructura foreach es asi.
+
+```php
+@section('content')
+   <h1>Portafolio</h1>
+   @foreach ($portafolio as $porta)
+       <li>{{$porta['title']}}</li>
+   @endforeach
+@endsection
+```
+#### if
+Si en dado caso el array **$portafolio** no tiene elementos, el forech no funcionaria, para eso podemos incluir un **if** para verificar si tiene elementos que haga el recorrido y si no que muestre un mensaje.
+
+```php
+$portafolio =[
+    // ['title'=>'Proyecto 1'],
+    // ['title'=>'Proyecto 2'],
+    // ['title'=>'Proyecto 3'],
+    // ['title'=>'Proyecto 4'],
+];
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::view('/portfolio','portfolio', compact('portafolio'))->name('portafolio');
+```
+```php
+@section('content')
+   <h1>Portafolio</h1>
+   @if($portafolio)
+      @foreach ($portafolio as $porta)
+         <li>{{$porta['title']}}</li>
+      @endforeach
+   @else
+      <li>No hay proyectos</li>
+   @endif
+@endsection
+```
+#### isset
+Pero que pasa si la variable **$portafolio** no esta declarado, el if no funcionaria, y para eso esta **isset** que se encarga de verificar si la variable existe o esta declarada.
+```php
+// $portafolio =[
+    // ['title'=>'Proyecto 1'],
+    // ['title'=>'Proyecto 2'],
+    // ['title'=>'Proyecto 3'],
+    // ['title'=>'Proyecto 4'],
+// ];
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::view('/portfolio','portfolio')->name('portafolio');
+```
+```php
+@section('content')
+   <h1>Portafolio</h1>
+   @isset($portafolio)
+      @foreach ($portafolio as $porta)
+         <li>{{$porta['title']}}</li>
+      @endforeach
+   @else
+      <li>No hay proyectos</li>
+   @endisset
+@endsection
+```
+#### forelse
+Este ultimo valida si el array tiene elementos que mostrar y si no con **empty** podemos mostrar un mensaje.
+
+```php
+$portafolio =[
+    // ['title'=>'Proyecto 1'],
+    // ['title'=>'Proyecto 2'],
+    // ['title'=>'Proyecto 3'],
+    // ['title'=>'Proyecto 4'],
+];
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::view('/portfolio','portfolio',compact('portafolio'))->name('portafolio');
+```
+```php
+@section('content')
+   <h1>Portafolio</h1>
+   @forelse ($portafolio as $porta)
+      <li>{{$porta['title']}}</li>
+   @empty
+      <li>No hay proyectos</li>
+   @endforelse
+@endsection
+```
+#### loop
+Esta es una una variable que tiene laravel y que sirve para ver las propiedades del array, como por ejemplo cual es el primer item, cual el ultimo, la profuntidad, que index estamos posicionado etc.
+
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta['title']}} <pre>{{var_dump($loop)}}</pre> </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+```json
+Proyecto 1
+object(stdClass)#213 (10) {
+  ["iteration"]=>
+  int(1)
+  ["index"]=>
+  int(0)
+  ["remaining"]=>
+  int(3)
+  ["count"]=>
+  int(4)
+  ["first"]=>
+  bool(true)
+  ["last"]=>
+  bool(false)
+  ["odd"]=>
+  bool(true)
+  ["even"]=>
+  bool(false)
+  ["depth"]=>
+  int(1)
+  ["parent"]=>
+  NULL
+}
+Proyecto 2
+object(stdClass)#212 (10) {
+  ["iteration"]=>
+  int(2)
+  ["index"]=>
+  int(1)
+  ["remaining"]=>
+  int(2)
+  ["count"]=>
+  int(4)
+  ["first"]=>
+  bool(false)
+  ["last"]=>
+  bool(false)
+  ["odd"]=>
+  bool(false)
+  ["even"]=>
+  bool(true)
+  ["depth"]=>
+  int(1)
+  ["parent"]=>
+  NULL
+}
+.........
+```
+Por ejemplo podemos saber que proyecto es el ultimo y mandar un  mensaje el proyecto que no sea el ultimo de esta forma.
+
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta['title']}} <small>{{$loop->last ? 'Es el ultimo': 'No es el ultimo'}}</small> </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+```text
+Proyecto 1 No es el ultimo
+Proyecto 2 No es el ultimo
+Proyecto 3 No es el ultimo
+Proyecto 4 Es el ultimo
+```
+#### Otras estructuras de control
+Estan tambien **for**, **while** y **switch**, los mas utilizados.
+
+```php
+@for ()
+    
+@endfor
+
+@while ()
+    
+@endwhile
+
+@switch($type)
+    @case(1)
+        
+        @break
+    @case(2)
+        
+        @break
+    @default
+        
+@endswitch
+```

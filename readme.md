@@ -377,10 +377,9 @@ Pero tambien podemos utilizar el controlador sin definir los metodos en el archi
 Route::resource('/portfolio', 'portafolioController');
 ```
 
-Y dependiendo del metodo que se requiere solo especificamos el tipo de accion (get, post, put) y automaticamente tomara el metodo, esto lo podemos ver en la consolo con el comando **route:list**
+Y dependiendo del metodo que se requiere solo especificamos el tipo de accion (get, post, put) y automaticamente tomara el metodo, esto lo podemos ver en la consola con el comando **route:list**
 
 ```console
-php artisan r:l
 C:\wamp64\www\intro_laravel>php artisan r:l
 +--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
 | Domain | Method    | URI                        | Name              | Action                                            | Middleware |
@@ -395,4 +394,101 @@ C:\wamp64\www\intro_laravel>php artisan r:l
 +--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
 ```
 
+Tambien podemos dejar solo los metodos que vamos a utilizar de la siguiente forma.
+
 ```php
+Route::resource('/portfolio', 'portafolioController')->only(['index','show']);
+```
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+----------+-----------------------+-----------------+-------------------------------------------------+------------+
+| Domain | Method   | URI                   | Name            | Action                                          | Middleware |
++--------+----------+-----------------------+-----------------+-------------------------------------------------+------------+
+|        | GET|HEAD | portfolio             | portfolio.index | App\Http\Controllers\portafolioController@index | web        |
+|        | GET|HEAD | portfolio/{portfolio} | portfolio.show  | App\Http\Controllers\portafolioController@show  | web        |
++--------+----------+-----------------------+-----------------+-------------------------------------------------+------------+
+```
+O de esta forma podemos excluir los metodos.
+
+```php
+Route::resource('/portfolio', 'portafolioController')->except(['index','show']);
+```
+Y apareceran todos los metodos menos los que excluimos
+
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+| Domain | Method    | URI                        | Name              | Action                                            | Middleware |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+|        | POST      | portfolio                  | portfolio.store   | App\Http\Controllers\portafolioController@store   | web        |
+|        | GET|HEAD  | portfolio/create           | portfolio.create  | App\Http\Controllers\portafolioController@create  | web        |
+|        | PUT|PATCH | portfolio/{portfolio}      | portfolio.update  | App\Http\Controllers\portafolioController@update  | web        |
+|        | DELETE    | portfolio/{portfolio}      | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
+|        | GET|HEAD  | portfolio/{portfolio}/edit | portfolio.edit    | App\Http\Controllers\portafolioController@edit    | web        |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+```
+#### controlador api
+Este controlador sirve para crear un **api-rest** y solo nos crea los metodos necesarios para este proceso (excluyen los metodos **create y edit**).
+
+```console
+php artisan make:controller portafolioController --api
+```
+```php
+Route::apiResource('/portfolio', 'portafolioController');
+```
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+-----------+-----------------------+-------------------+---------------------------------------------------+------------+
+| Domain | Method    | URI                   | Name              | Action                                            | Middleware |
++--------+-----------+-----------------------+-------------------+---------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio             | portfolio.index   | App\Http\Controllers\portafolioController@index   | web        |
+|        | POST      | portfolio             | portfolio.store   | App\Http\Controllers\portafolioController@store   | web        |
+|        | GET|HEAD  | portfolio/{portfolio} | portfolio.show    | App\Http\Controllers\portafolioController@show    | web        |
+|        | PUT|PATCH | portfolio/{portfolio} | portfolio.update  | App\Http\Controllers\portafolioController@update  | web        |
+|        | DELETE    | portfolio/{portfolio} | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
++--------+-----------+-----------------------+-------------------+---------------------------------------------------+------------+
+```
+De igual forma tiene la opción de utilizar **except y only** para activar los metodos.
+
+#### Cambiando ruta a español
+Por último al utilizar el **resourse** en la terminal se ven los metodos **create y edit** en ingles, podemos cambiarlo en el archivo que se encuentra en la ruta **app/Providers/AppServiceProvider.php**.
+
+```php
+public function boot()
+    {
+        Route::resourceVerbs([
+            'create' => 'crear',
+            'edit'   => 'editar'
+        ]);
+    }
+```
+Antes
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+| Domain | Method    | URI                        | Name              | Action                                            | Middleware |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio                  | portfolio.index   | App\Http\Controllers\portafolioController@index   | web        |
+|        | POST      | portfolio                  | portfolio.store   | App\Http\Controllers\portafolioController@store   | web        |
+|        | GET|HEAD  | portfolio/create           | portfolio.create  | App\Http\Controllers\portafolioController@create  | web        |
+|        | GET|HEAD  | portfolio/{portfolio}      | portfolio.show    | App\Http\Controllers\portafolioController@show    | web        |
+|        | PUT|PATCH | portfolio/{portfolio}      | portfolio.update  | App\Http\Controllers\portafolioController@update  | web        |
+|        | DELETE    | portfolio/{portfolio}      | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
+|        | GET|HEAD  | portfolio/{portfolio}/edit | portfolio.edit    | App\Http\Controllers\portafolioController@edit    | web        |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+```
+Después
+```
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+-----------+------------------------------+-------------------+---------------------------------------------------+------------+
+| Domain | Method    | URI                          | Name              | Action                                            | Middleware |
++--------+-----------+------------------------------+-------------------+---------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio                    | portfolio.index   | App\Http\Controllers\portafolioController@index   | web        |
+|        | POST      | portfolio                    | portfolio.store   | App\Http\Controllers\portafolioController@store   | web        |
+|        | GET|HEAD  | portfolio/crear              | portfolio.create  | App\Http\Controllers\portafolioController@create  | web        |
+|        | GET|HEAD  | portfolio/{portfolio}        | portfolio.show    | App\Http\Controllers\portafolioController@show    | web        |
+|        | PUT|PATCH | portfolio/{portfolio}        | portfolio.update  | App\Http\Controllers\portafolioController@update  | web        |
+|        | DELETE    | portfolio/{portfolio}        | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
+|        | GET|HEAD  | portfolio/{portfolio}/editar | portfolio.edit    | App\Http\Controllers\portafolioController@edit    | web        |
++--------+-----------+------------------------------+-------------------+---------------------------------------------------+------------+
+```

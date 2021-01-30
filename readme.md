@@ -4,13 +4,13 @@
 Al definir las rutas en laravel podemos modificar la ruta las veces que sea necesario
 y en los links solo hacer referencia a la ruta.
 
-:::php
+```php
 Route::view('/','home')->name('inicio');
 Route::view('/about','about')->name('acerca');
 Route::view('/portfolio','portfolio')->name('portafolio');
 Route::view('/contact','contact')->name('contacto');
 
-:::html
+```html
 <nav>
     <ul>
     <li><a href="{{route('/')}}">Home</a></li>

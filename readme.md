@@ -284,3 +284,115 @@ Estan tambien **for**, **while** y **switch**, los mas utilizados.
         
 @endswitch
 ```
+
+### Controladores
+En ves de invocar a la vista desde el archivo de las rutas podemos crear un controlador en su lugar, para crear un controlador que solo tenga un solo método se utiliza el siguiente comando.
+#### controlador invoke
+
+```console
+php artisan make:controller portafolioController -i
+```
+```php
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class portafolioController extends Controller
+{
+    /**
+     * Handle the incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function __invoke(Request $request)
+    {
+        //
+    }
+}
+```
+Como vemos automaticamente nos crea un unico metodo que es **__incovke** y que por este metodo ya no es necesario declararlo en las rutas, solo se declara la ruta y el controlador.
+
+```php
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::get('/portfolio','portafolioController')->name('portafolio');
+```
+Ahora para pasar los datos del array a la vista, lo hacemos en el controlador de la siguiente manera.
+
+```php
+public function __invoke(Request $request){
+      $portafolio =[
+      ['title'=>'Proyecto 1'],
+      ['title'=>'Proyecto 2'],
+      ['title'=>'Proyecto 3'],
+      ['title'=>'Proyecto 4'],
+      ];
+      return view('portfolio',compact('portafolio'));
+   }
+```
+El **compact** podemos declararlo por que debe de ser igual al nombre del array.
+Para verificar las rutas declaradas podemos utilizar el siguiente comando.
+
+```console
+php artisan route:list
+```
+
+#### controlador resource
+Este tipo de controlador enlista los metodos de un crud **index, create, store, show, edit, update, delete/destroy** y se realiza con el siguiente comando.
+
+```console
+php artisan make:controller portafolioController --resource
+```
+Puede ser **--resource** o **-r**
+
+```php
+class portafolioController extends Controller
+{
+    public function index(){
+    }
+    public function create(){
+    }
+    public function store(Request $request){
+    }
+    public function show($id){
+    }
+    public function edit($id){
+    }
+    public function update(Request $request, $id){
+    }
+    public function destroy($id){
+    }
+}
+```
+
+Y en el archivo de rutas debemos de especificar el metodo a utilizar de la siguiente forma.
+
+```php
+Route::get('/portfolio','portafolioController@index')->name('portafolio');
+```
+
+Pero tambien podemos utilizar el controlador sin definir los metodos en el archivo de rutas, de la siguiente forma.
+```php
+Route::resource('/portfolio', 'portafolioController');
+```
+
+Y dependiendo del metodo que se requiere solo especificamos el tipo de accion (get, post, put) y automaticamente tomara el metodo, esto lo podemos ver en la consolo con el comando **route:list**
+
+```console
+php artisan r:l
+C:\wamp64\www\intro_laravel>php artisan r:l
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+| Domain | Method    | URI                        | Name              | Action                                            | Middleware |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio                  | portfolio.index   | App\Http\Controllers\portafolioController@index   | web        |
+|        | POST      | portfolio                  | portfolio.store   | App\Http\Controllers\portafolioController@store   | web        |
+|        | GET|HEAD  | portfolio/create           | portfolio.create  | App\Http\Controllers\portafolioController@create  | web        |
+|        | GET|HEAD  | portfolio/{portfolio}      | portfolio.show    | App\Http\Controllers\portafolioController@show    | web        |
+|        | PUT|PATCH | portfolio/{portfolio}      | portfolio.update  | App\Http\Controllers\portafolioController@update  | web        |
+|        | DELETE    | portfolio/{portfolio}      | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
+|        | GET|HEAD  | portfolio/{portfolio}/edit | portfolio.edit    | App\Http\Controllers\portafolioController@edit    | web        |
++--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
+```
+
+```php

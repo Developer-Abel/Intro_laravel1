@@ -478,7 +478,7 @@ C:\wamp64\www\intro_laravel>php artisan r:l
 +--------+-----------+----------------------------+-------------------+---------------------------------------------------+------------+
 ```
 Después
-```
+```console
 C:\wamp64\www\intro_laravel>php artisan r:l
 +--------+-----------+------------------------------+-------------------+---------------------------------------------------+------------+
 | Domain | Method    | URI                          | Name              | Action                                            | Middleware |
@@ -491,4 +491,140 @@ C:\wamp64\www\intro_laravel>php artisan r:l
 |        | DELETE    | portfolio/{portfolio}        | portfolio.destroy | App\Http\Controllers\portafolioController@destroy | web        |
 |        | GET|HEAD  | portfolio/{portfolio}/editar | portfolio.edit    | App\Http\Controllers\portafolioController@edit    | web        |
 +--------+-----------+------------------------------+-------------------+---------------------------------------------------+------------+
+```
+
+### Helpers
+Vamos a crear un **helper** para tener una función donde nos indique en que vista estamos (home,contacto,portafolio...) y dependiendo de eso que se active el link poniendose en un color rojo.
+Primero vamos a utilizar la funcion **request()** que ya viene con laravel y nos da una serie de propiedades que podemos aprovechar para crear una función.
+
+Primero esta esta propiedad que nos muestra la **url** completa en donde estamos situados, dependiendo de que link estamos pulsando.
+
+```php
+request()->url()
+```
+Ejemplo
+```
+http://localhost:8000/portfolio
+```
+
+Esta otra propiedad muestra solo el nombre de la **url**
+
+```php
+request()->path()
+```
+
+Ejemplo
+```
+portfolio
+```
+
+Por último esta propiedad nos indica con **true o false** si estamos en la ruta que le espesificamos y esta propiedad es la que vamos a utilizar en los links.
+
+```php
+request()->routeIs('portafolio')
+```
+
+Ahora en los links indicamos si esque estamos situados en la **url** que estamos espeficicando en la clase agregamos **activate** que esto significa que se va a colorear de color rojo, y si no que no agrege nada (usando el operador ternario).
+
+```php
+<ul>
+   <li class="{{request()->routeIs('inicio') ? 'active':''}}"><a href="/">Home</a></li>
+   <li class="{{request()->routeIs('acerca') ? 'active':''}}"><a href="/about">About</a></li>
+   <li class="{{request()->routeIs('portafolio') ? 'active':''}}"><a href="{{route('portafolio')}}">Portafolio</a></li>
+   <li class="{{request()->routeIs('contacto') ? 'active':''}}"><a href="{{url('contact')}}">Contacto</a></li>
+</ul>
+```
+```css
+<style>
+   .active a{
+      color: red;
+      text-decoration:none;
+   }
+</style>
+```
+
+#### helper
+En este momento dependiendo de que link pulsemos se va a activar (coloreandose de color rojo), pero ahora vamos a formar una función para que sea mas práctico y si lo llegamos a utlizar en otro lugar ya estaria disponible.
+Para eso vamos a crear un archivo asi **"app/helpers.php"** dentro vamos acrear una función y agregamos la logica del operador ternario que tenemos en los links.
+
+```php
+function setActive($routeName){
+   return request()->routeIs($routeName) ? 'active':'';
+}
+```
+
+Para que esto funcione vamos a declararlo en el archivo **composer.json** en la sección del **autoload** creamos un elemento mas **files** y añadimos la ruta donde se encuentra el archivo helper para que se cargue al iniciar laravel.
+
+```json
+"autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "classmap": [
+            "database/seeds",
+            "database/factories"
+        ],
+        "files": ["app/helpers.php"]
+    },
+```
+
+Por último debemos de reiniciar composer para que tome los cambios.
+
+```console
+C:\wamp64\www\intro_laravel>composer dumpautoload
+Generating optimized autoload files
+> Illuminate\Foundation\ComposerScripts::postAutoloadDump
+> @php artisan package:discover --ansi
+Discovered Package: [32mbeyondcode/laravel-dump-server[39
+Discovered Package: [32mfideloper/proxy[39m
+Discovered Package: [32mlaravel/tinker[39m
+Discovered Package: [32mnesbot/carbon[39m
+Discovered Package: [32mnunomaduro/collision[39m
+[32mPackage manifest generated successfully.[39m
+Generated optimized autoload files containing 3847 classes
+```
+
+Y listo ahora podemos quitar lo que teniamos en los links y agregar la función del helper.
+
+```php
+<ul>
+   <li class="{{setActive('inicio')}}"><a href="/">Home</a></li>
+   <li class="{{setActive('acerca')}}"><a href="/about">About</a></li>
+   <li class="{{setActive('portafolio')}}"><a href="{{route('portafolio')}}">Portafolio</a></li>
+   <li class="{{setActive('contacto')}}"><a href="{{url('contact')}}">Contacto</a></li>
+</ul>
+```
+#### partials
+Vamos a separar el **nav** para que se vea un poco limpio el código, para eso vamos a crear una carpeta que se llame **partials** en la carpeta de views que contendra archivos parciales.
+
+```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="/">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="/about">About</a></li>
+       <li class="{{setActive('portafolio')}}"><a href="{{route('portafolio')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{url('contact')}}">Contacto</a></li>
+    </ul>
+ </nav>
+ ```
+
+ Y en la plantilla lo llamamos con **@include()** y la ruta, siempre las rutas para las vistas van a empezar de la carpeta **view** entonces la plantilla quedaria asi.
+
+ ```php
+<html>
+   <head>
+      <title>@yield('title','default')</title>
+      <style>
+         .active a{
+            color: red;
+            text-decoration:none;
+         }
+      </style>
+   </head>
+   <body>
+      @include('partials.nav')
+
+      @yield('content')
+   </body>
+</html>
 ```

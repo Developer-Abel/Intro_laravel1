@@ -761,10 +761,33 @@ Y para que funcione en la carpeta **config/app** en **'locale' => 'en',** lo cam
 'locale' => 'es',
 ```
 
-Ahora cuando un campo este vacio el error regresara en español, pero existen muchos mensajes de error que aun no estan traducidos para esto vamos a la  [siguiente enlace][git_es] para obtener los archivos ya traducidos, los descargamos y listo.
-[git_es]: https://github.com/Laravel-Lang/lang/tree/master/src/es
+Ahora cuando un campo este vacio el error regresara en español, pero existen muchos mensajes de error que aun no estan traducidos para esto vamos a la siguiente enlace para obtener los archivos ya traducidos, los descargamos y listo.
+Enlace: https://github.com/Laravel-Lang/lang/tree/master/src/es
 
-Pero también podemos realizar traducciones personalizados solo para el formulario que estamos trabajando
+Pero también podemos realizar traducciones personalizados solo para el formulario que estamos trabajando, en el controlador después de las validaciones podemos agregar los mensajes de validación de esta forma.
+
+```php
+function store(Request $request){
+      request()->validate([
+         'nombre' => 'required',
+         'email' => 'required',
+         'asunto' => 'required',
+         'mensaje' => 'required |min:3'
+      ],
+      [
+         'nombre.required' => 'Necesito tu nombre',
+         'mensaje.required' => 'Necesito tu mensaje',
+         'mensaje.min' => 'Ingresa almenos 3 letras',
+         
+      ]
+   );
+
+      return "paso";
+   }
+```
+
+Por último existe otro archivo de traducción que hace referecia a mensajes de laravel ya sean errores o mensajes normales y esto se encuentra en **resources/lang/es.json** de igual forma se tiene que crear el archivo y el archivo traducción estan en el siguiente enlace.
+Enlace: https://github.com/Laravel-Lang/lang/tree/master/src/es
 
 
 

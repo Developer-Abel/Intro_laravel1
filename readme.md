@@ -628,3 +628,76 @@ Vamos a separar el **nav** para que se vea un poco limpio el código, para eso v
    </body>
 </html>
 ```
+
+### Envío de datos de formulario
+
+El envio de datos a traves de formularios se realiza por medio de post, para eso vamos a crear una que va hacer de contacto, pero antes es importante resaltar que laravel utiliza un sistema de autenticación en los formularios, entonces se requiere de un token.
+
+Para eso ingresamos **@csrf** en el formulario y nos crea un campo oculto con el token.
+```php
+@csrf
+```
+
+También requiere de un tipo de metodo, en nuestro caso va hacer **POST**.
+```php
+method="POST"
+```
+
+Y por último la ruta (contacto hace referencia al nombre que le dimos a la ruta).
+```php
+action="{{route('contacto')}}"
+```
+
+El formulario quedaria asi.
+```php
+@section('content')
+   <h1>contacto</h1>
+   <form action="{{route('contacto')}}" method="POST">
+      @csrf
+      <input type="text" name="nombre" placeholder="nombre"><br>
+      <input type="text" name="asunto" placeholder="asunto"><br>
+      <input type="text" name="email" placeholder="email"><br>
+      <textarea name="mensaje" id="" cols="30" rows="5">Mensaje</textarea> <br>
+      <button type="submit">Enviar</button>
+   </form>
+@endsection
+```
+
+Es importante recalcar que todos los campos deben de llevar su propiedad **name**.
+
+Ahora vamos a crear el controlador **MessgeController** para agregarla en la ruta.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:controller MessageController
+Controller created successfully.
+```
+
+```php
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::get('/portfolio','portafolioController@index')->name('portafolio');
+Route::view('/contact','contact')->name('contacto');
+Route::post('contact','MessageController@store')->name('contacto');
+```
+Tenemos 2 rutas **contact** la direfencia es que una es **post** y la otra de tipo **get**, el método al que estamos ingresando es **store**.
+
+En el controlador creamos el método y retornamos **request()** que esto va visualizar todos los campos del formulario.
+```php
+class MessageController extends Controller
+{
+    function store(Request $request){
+        return request();
+    }
+}
+```
+```json
+{"_token":"jJmHfSOH70X6riuJJ64mKjaZ3gClzkMWONgixtt4","nombre":null,"asunto":null,"email":null,"mensaje":"Mensaje"}
+```
+
+Si queremos obtener solo el valor de un input seria cualquiera de estas opciones.
+```php
+return request('nombre');
+return $request->get('nombre');
+return $request->nombre;
+```
+
+

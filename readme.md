@@ -700,4 +700,72 @@ return $request->get('nombre');
 return $request->nombre;
 ```
 
+### Validación campos formulario
+
+Para validar los campos de un formulario, en el controlador existe **request()->validate([])** para especificar las validaciones de cada campo.
+
+```php
+request()->validate([
+         'nombre' => 'required'
+      ]);
+```
+
+Y en la vista podemos obtenerla de forma general (los errores se muestran en ingles).
+```php
+{{$errors}}
+```
+
+O si se quiere saber si hay o no error (muestra false o true).
+```php
+{{var_dump($errors->any())}}
+```
+
+Si queremos ver todos los errores den forma de array.
+```php
+{{var_dump($errors->all())}}
+```
+
+Pero lo mas usual es que se muestre el mensaje de error de bajo de cada input.
+```php
+<input type="text" name="nombre" placeholder="nombre"><br>
+{!! $errors->first('nombre','<small>:message</small><br>')!!}
+```
+
+Ahora en el controlador donde ingresamos las validaciones se pueden crear mas de una validación para cada input, un ejempo es el campo de **mensaje** que estamos validando que no vaya vacio y que tenga almenos 3 carácteres.
+```php
+function store(Request $request){
+      request()->validate([
+         'nombre' => 'required',
+         'email' => 'required',
+         'asunto' => 'required',
+         'mensaje' => 'required |min:3'
+      ]);
+
+      return "paso";
+   }
+```
+
+### Traducción de mensajes
+
+Existe una archivo que permite la traducción de mensajes y cuando se instala laravel no lo trae por defecto, la ruta seria **resources/lang/es** y contienen los archivos **auth,pagination ...**, asi que vamos a crear la carpeta y los archivos los descargamos desde github ya que existen varios ya traducidos.
+**
+Los mensajes de error esta en el archivo **validation.php**, el cual podemos modificarlo.
+```php
+return [
+    'required' => 'El campo :attribute es obligatorio'
+];
+```
+
+Y para que funcione en la carpeta **config/app** en **'locale' => 'en',** lo cambiamos a **es**
+```php
+'locale' => 'es',
+```
+
+Ahora cuando un campo este vacio el error regresara en español, pero existen muchos mensajes de error que aun no estan traducidos para esto vamos a la  [siguiente enlace][git_es] para obtener los archivos ya traducidos, los descargamos y listo.
+[git_es]: https://github.com/Laravel-Lang/lang/tree/master/src/es
+
+Pero también podemos realizar traducciones personalizados solo para el formulario que estamos trabajando
+
+
+
 

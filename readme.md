@@ -789,6 +789,306 @@ function store(Request $request){
 Por último existe otro archivo de traducción que hace referecia a mensajes de laravel ya sean errores o mensajes normales y esto se encuentra en **resources/lang/es.json** de igual forma se tiene que crear el archivo y el archivo traducción estan en el siguiente enlace.
 Enlace: https://github.com/Laravel-Lang/lang/tree/master/src/es
 
+### Enviar Emails
 
+Para el envio de email existe la posibilidad de verificar en modo prueba con **log** o con **Mailtrab** y para producción existen varias, la recomentada es Sengrid.
 
+#### Modo prueba log
+En el controlador **MessageController** vamos a importar **use App\Mail\MessageReceived; y use Illuminate\Support\Facades\Mail;** ya que vamos a utilizar el motor de email de laravel que es **Mail**.
+```php
+use App\Mail\MessageReceived;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
+```
+Se hace una instancia de la clase **mail** y en el **send** se agrega la clase que enseguida vamos a crear (que hace refencia a la vista del email).
+```php
+function store(Request $request){
+      request()->validate([
+         'nombre' => 'required',
+         'email' => 'required',
+         'asunto' => 'required',
+         'mensaje' => 'required |min:3'
+      ],
+      [
+         'nombre.required' => 'Necesito tu nombre',
+         'mensaje.required' => 'Necesito tu mensaje',
+         'mensaje.min' => 'Ingresa almenos 3 letras',
+         
+      ]
+   );
 
+   Mail::to('abel@gmail.com')->send(New MessageReceived);
+
+      return "Mensaje enviado";
+   }
+```
+
+Vamos a crear la clase **MessageReceived**.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:mail MessageReceived
+Mail created successfully.
+```
+En el método **build** definimos la ruta de la vista de nuestro email.
+```php
+public function build()
+    {
+        return $this->view('mails.message-received');
+    }
+```
+En la carpeta **view** creamos la carpeta **mails/message-received.balde.php** y en este archivo es donde va a ir la información del mensaje.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Email recibido</h1>
+</body>
+</html>
+```
+Ahora solo falta ir al archivo **.env** que se encuentra en la raiz y en la parte da ña configuración del email vamos a ponerlo como modo prueba **log**.
+```
+MAIL_DRIVER=log
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+```
+Al ingresar datos en nuestro formulario y si le damos enviar se va a enviar nuestro correo, para verificarlo vamos a la siguiente ruta **storage/logs/laravel-2021-02-02-log/** (dependiendo cual sea el último log) nos muestra los datos de nuestro mensaje como asunto, remitente, mensaje, hora etc.
+```console
+[2021-02-02 11:04:09] local.DEBUG: Message-ID: <c6cb1eb3c15e69cfn1fe0979fb84eb76@127.0.0.1>
+Date: Tue, 02 Feb 2021 11:04:09 +0000
+Subject: Message Received
+From: Example <hello@example.com>
+To: abel@gmail.com
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Email recibido</h1>
+</body>
+</html>
+```
+Vemos que el **from** esta llegando como de prueba, esto se puede configurar en el archivo **.env** incluso podemos ingresar quien esta enviando el correo.
+```
+MAIL_DRIVER=log
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=abel93lk@gmail.com
+MAIL_FROM_NAME= 'Abel Garcia'
+```
+Y al enviar nuevamente el email saldria así.
+```console
+[2021-02-02 11:21:48] local.DEBUG: Message-ID: <a6f95e9d8b830cedb8eaa4f3a416184a@127.0.0.1>
+Date: Tue, 02 Feb 2021 11:21:48 +0000
+Subject: Message Received
+From: Abel Garcia <abel93lk@gmail.com>
+To: abel@gmail.com
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Email recibido</h1>
+</body>
+</html>
+```
+El asunto se declara en el archivo **mail/MessageReceived,php** de la siguiente forma.
+```php
+public $subject = 'Mensaje recibido';
+```
+Debe de ser pública para que se pueda utilizar en la vista, al enviar nuevamente el mensaje se veria asi.
+```console
+[2021-02-02 11:25:22] local.DEBUG: Message-ID: <bf764f959681caa524dfc7f2075c4ba6@127.0.0.1>
+Date: Tue, 02 Feb 2021 11:25:22 +0000
+Subject: Mensaje recibido
+From: Abel Garcia <abel93lk@gmail.com>
+To: abel@gmail.com
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+```
+Y para recibir los datos que estamos enviando, basta con guardar en una variable todo el contenido y pasarlo a la vista.
+```php
+function store(Request $request){
+      $message = request()->validate([
+         'nombre' => 'required',
+         'email' => 'required',
+         'asunto' => 'required',
+         'mensaje' => 'required |min:3'
+      ],
+      [
+         'nombre.required' => 'Necesito tu nombre',
+         'mensaje.required' => 'Necesito tu mensaje',
+         'mensaje.min' => 'Ingresa almenos 3 letras',
+         
+      ]
+   );
+
+   Mail::to('abel@gmail.com')->send(New MessageReceived($message));
+
+      return "Mensaje enviado";
+   }
+```
+Y en **Mail/MessageReceived.php** recibimos en el contructor el contenido y lo volvemos a pasar a otra variable para utilizarla en la vista.
+```php
+class MessageReceived extends Mailable
+{
+    use Queueable, SerializesModels;
+    public $subject = 'Mensaje recibido';
+    public $msg;
+    /**
+     * Create a new message instance.
+     *
+     * @return void
+     */
+    public function __construct($msg)
+    {
+        $this->msg = $msg;
+    }
+```
+Hacemos un **var_dump()** en la vista para verificar que el mensaje llego correctamente.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Email recibido</h1>
+    {{var_dump($msg)}}
+</body>
+</html>
+```
+La salida en el log se veria así.
+```console
+Date: Tue, 02 Feb 2021 11:33:59 +0000
+Subject: Mensaje recibido
+From: Abel Garcia <abel93lk@gmail.com>
+To: abel@gmail.com
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Email recibido</h1>
+    array(4) {
+  ["nombre"]=>
+  string(4) "Abel"
+  ["email"]=>
+  string(17) "lk765mo@gmail.com"
+  ["asunto"]=>
+  string(20) "Solicito informacion"
+  ["mensaje"]=>
+  string(33) "Este es mi mensaje del formulario"
+}
+
+</body>
+</html>
+```
+Ya solo valtaria darle forma.
+```php
+<body>
+    <h1>Email recibido</h1>
+    <p>Recibiste un mensaje de: {{$msg['nombre']}} - {{$msg['email']}} </p>
+    <p>Asunto <strong>{{$msg['asunto']}}</strong></p>
+    <p>Contenido: {{$msg['mensaje']}} </p>
+</body>
+```
+En el controlador es buena práctica cambiarle el método **send** por **queue**. 
+```php
+Mail::to('abel@gmail.com')->queue(New MessageReceived($message));
+```
+Una forma rápida de verificar el mensaje en el navegador seria asi.
+```php
+// Mail::to('abel@gmail.com')->queue(New MessageReceived($message));
+   return new MessageReceived($message);
+```
+#### Mailtrap
+Se tiene que tener una cuenta en **mailtrap** y hay un apartado donde vienen las credenciales y eso se configura en el archivo **.env** y para eso se debe de configurar como **smtp**.
+```
+MAIL_DRIVER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=name mailtrap
+MAIL_PASSWORD=pass mailtrap
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=abel93lk@gmail.com
+MAIL_FROM_NAME= 'Abel Garcia'
+```
+Y sin mover nada mas, los mensajes estarian llegando a **Mailtrap**
+
+#### Sendrid
+Para vincularlo con sengrid se tiene que instalar un paquete, los pasos lo podemos obtener aqui
+Enlace: https://github.com/s-ichikawa/laravel-sendgrid-driver
+
+```console
+C:\wamp64\www\intro_laravel>composer require s-ichikawa/laravel-sendgrid-driver:~2.0
+./composer.json has been updated
+Running composer update s-ichikawa/laravel-sendgrid-driver
+Loading composer repositories with package information
+```
+Se tuvo que espesificar la versión por que por mi **php** no soportaba la actual.
+
+Y como lo espesifica en el git, se estaria configurando de esta manera el archivo **.env**.
+```
+#MAIL_DRIVER=log
+#MAIL_HOST=smtp.mailtrap.io
+
+MAIL_DRIVER=sendgrid
+SENDGRID_API_KEY='YOUR_SENDGRID_API_KEY'
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=abel93lk@gmail.com
+MAIL_FROM_NAME= 'Abel Garcia'
+```
+Por último en el archivo **config/services.php** ingresamos el sengrid.
+
+```json
+'ses' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+    'sendgrid' => [
+        'api_key' => env('SENDGRID_API_KEY'),
+    ],
+```

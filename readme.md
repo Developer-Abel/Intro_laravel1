@@ -1092,3 +1092,29 @@ Por último en el archivo **config/services.php** ingresamos el sengrid.
         'api_key' => env('SENDGRID_API_KEY'),
     ],
 ```
+
+### Variables de entorno y Base de datos
+#### Variables de entorno
+Las variables de entorno existen 2 **Entorno de desarrollo** y **Entorno de producción** Estas variables se concentran en el archivo **.env**, este archivo no se sube al git ya que esta en la lista de ingnorados, laravel sabe cual es el archivo de entorno y de producción por la variable **APP_ENV** que puede estar en **local** o **production**.
+```
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:QVmiMNBdz5XwvKRAM33SCeOg2mBqQWBnIy4T+QKTxgY=
+APP_DEBUG=true
+APP_URL=http://localhost
+```
+
+#### Base de datos
+Las configuraciones de Base de datos estan en el archivo **config/database.php**, esto quiere decir que si no encuentra la configuración de la base de datos en el archivo **.env** que es esta: **DB_CONNECTION**, toma por default mysql (en este caso).
+```php
+'default' => env('DB_CONNECTION', 'mysql'),
+```
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=root
+DB_PASSWORD=
+```
+Para la conexión tenemos que especificar la BD, el host, el puerto (casi siempre es el mismo), el nombre de la base de datos, y sus credenciales.

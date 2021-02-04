@@ -1118,3 +1118,288 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 Para la conexión tenemos que especificar la BD, el host, el puerto (casi siempre es el mismo), el nombre de la base de datos, y sus credenciales.
+
+### Migraciones
+Las migraciones son un control de versiones de la base de datos permite crear y  modificar facilmente las tablas permite destruir y construir el esquema de la base de datos.
+
+Por defecto laravel ya trae unas migraciones que son la creación de usuarios y de la tabla passwords, dentro de los archivos existen 2 funciones **up()** y **down()**.
+
+```php
+public function up(){
+   Schema::create('users', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->string('name');
+      $table->string('email')->unique();
+      $table->timestamp('email_verified_at')->nullable();
+      $table->string('password');
+      $table->rememberToken();
+      $table->timestamps();
+   });
+}
+public function down(){
+   Schema::dropIfExists('users');
+}
+```
+La función **up()** crea la tabla y a su vez le añade las columnas que le especifiquemos, cada columna con su tipo de dato.
+```php
+$table->bigIncrements('id'); // Es autoincrementable
+$table->string('name');  // Tipo string
+$table->string('email')->unique(); //Tipo string y ademas unico
+$table->timestamp('email_verified_at')->nullable(); // Tipo date y comienza con nulo
+$table->string('password'); // Tipo string
+$table->rememberToken(); // Internamente laravel lo configura con string
+$table->timestamps(); // Tipo date laravel lo configura internamente
+```
+Ahora la función **down()** es lo contrario que la función up(), ya que destruye la tabla.
+
+#### migrate
+Bien, el comando para ejecutar la migración.
+
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate
+Migrating: 2014_10_12_000000_create_users_table
+Migrated:  2014_10_12_000000_create_users_table (0.2 seconds)
+Migrating: 2014_10_12_100000_create_password_resets_table
+Migrated:  2014_10_12_100000_create_password_resets_table (0.16 seconds)
+```
+En la base de datos crea un tabla adicional **migrations**, en esta tabla se guarda el historial de las migraciones 
+
+```console
+mysql> select * from migrations;
++----+------------------------------------------------+-------+
+| id | migration                                      | batch |
++----+------------------------------------------------+-------+
+|  4 | 2014_10_12_000000_create_users_table           |     1 |
+|  5 | 2014_10_12_100000_create_password_resets_table |     1 |
++----+------------------------------------------------+-------+
+2 rows in set (0.00 sec)
+```
+La columna **batch** indica la ves que se registro la migracion, por ejemplo la tabla users y password_resets se hicieron en un solo batch (**se ejecutaron al mismo tiempo**).
+
+#### rollback
+Y para ejecutar la función **down**.
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate:rollback
+Rolling back: 2014_10_12_100000_create_password_resets_table
+Rolled back:  2014_10_12_100000_create_password_resets_table (0.03 seconds)
+Rolling back: 2014_10_12_000000_create_users_table
+Rolled back:  2014_10_12_000000_create_users_table (0.01 seconds)
+```
+Elimina todas las tablas menos el de **migrations** (pero si lo vacia).
+
+#### rollback step
+Es posible eliminar por pasos, ejemplo si queremos eliminar la última tabla creada.
+```console
+mysql> select * from migrations;
++----+------------------------------------------------+-------+
+| id | migration                                      | batch |
++----+------------------------------------------------+-------+
+| 13 | 2014_10_12_000000_create_users_table           |     1 |
+| 14 | 2014_10_12_100000_create_password_resets_table |     1 |
++----+------------------------------------------------+-------+
+2 rows in set (0.00 sec)
+```
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate:rollback --step=1
+Rolling back: 2014_10_12_100000_create_password_resets_table
+Rolled back:  2014_10_12_100000_create_password_resets_table (0.03 seconds)
+```
+Esto es de acuerdo a la tabla **migrations**.
+```console
+mysql> select * from migrations;
++----+--------------------------------------+-------+
+| id | migration                            | batch |
++----+--------------------------------------+-------+
+| 13 | 2014_10_12_000000_create_users_table |     1 |
++----+--------------------------------------+-------+
+1 row in set (0.00 sec)
+```
+Y si volvemos a ejecutar nuevamente la migración.
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate
+Migrating: 2014_10_12_100000_create_password_resets_table
+Migrated:  2014_10_12_100000_create_password_resets_table (0.17 seconds)
+```
+Solo creo la tabla **password_reset** por es el que se elimino, pero ahora si revisamos la tabla **migrations** veremos que que los **batchs** cambiaron.
+```console
+mysql> select * from migrations;
++----+------------------------------------------------+-------+
+| id | migration                                      | batch |
++----+------------------------------------------------+-------+
+| 13 | 2014_10_12_000000_create_users_table           |     1 |
+| 15 | 2014_10_12_100000_create_password_resets_table |     2 |
++----+------------------------------------------------+-------+
+2 rows in set (0.00 sec)
+```
+Por que los **batchs** hacen referencia al evento de ejecución, entonces a la hora de realizar un **rollback** normal solo se va a eliminar el último **batch**.
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate:rollback
+Rolling back: 2014_10_12_100000_create_password_resets_table
+Rolled back:  2014_10_12_100000_create_password_resets_table (0.03 seconds)
+```
+```console
+mysql> select * from migrations;
++----+--------------------------------------+-------+
+| id | migration                            | batch |
++----+--------------------------------------+-------+
+| 13 | 2014_10_12_000000_create_users_table |     1 |
++----+--------------------------------------+-------+
+1 row in set (0.00 sec)
+```
+#### fresh
+Si ya ejecutamos las migraciones y ya estan creadas las tablas pero se nos olvido añadir una nueva columna tenemos que hacer el **rollback** y después crear las migraciones otravez, pero existe un comando que lo simplifica que es el **fresh**, digamos que vamos añadir una columna **phone** a la tabla **users**.
+```php
+public function up(){
+   Schema::create('users', function (Blueprint $table) {
+      $table->bigIncrements('id');
+      $table->string('name');
+      $table->string('phone');
+      $table->string('email',6)->unique();
+      $table->timestamp('email_verified_at')->nullable();
+      $table->string('password');
+      $table->rememberToken();
+      $table->timestamps();
+   });
+}
+```
+```console
++-------------------+---------------------+------+-----+---------+----------------+
+| Field             | Type                | Null | Key | Default | Extra          |
++-------------------+---------------------+------+-----+---------+----------------+
+| id                | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| name              | varchar(255)        | NO   |     | NULL    |                |
+| email             | varchar(6)          | NO   | UNI | NULL    |                |
+| email_verified_at | timestamp           | YES  |     | NULL    |                |
+| password          | varchar(255)        | NO   |     | NULL    |                |
+| remember_token    | varchar(100)        | YES  |     | NULL    |                |
+| created_at        | timestamp           | YES  |     | NULL    |                |
+| updated_at        | timestamp           | YES  |     | NULL    |                |
++-------------------+---------------------+------+-----+---------+----------------+
+```
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate:fresh
+Dropped all tables successfully.
+Migration table created successfully.
+Migrating: 2014_10_12_000000_create_users_table
+Migrated:  2014_10_12_000000_create_users_table (0.2 seconds)
+Migrating: 2014_10_12_100000_create_password_resets_table
+Migrated:  2014_10_12_100000_create_password_resets_table (0.22 seconds)
+```
+```console
++-------------------+---------------------+------+-----+---------+----------------+
+| Field             | Type                | Null | Key | Default | Extra          |
++-------------------+---------------------+------+-----+---------+----------------+
+| id                | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| name              | varchar(255)        | NO   |     | NULL    |                |
+| phone             | varchar(255)        | NO   |     | NULL    |                |
+| email             | varchar(6)          | NO   | UNI | NULL    |                |
+| email_verified_at | timestamp           | YES  |     | NULL    |                |
+| password          | varchar(255)        | NO   |     | NULL    |                |
+| remember_token    | varchar(100)        | YES  |     | NULL    |                |
+| created_at        | timestamp           | YES  |     | NULL    |                |
+| updated_at        | timestamp           | YES  |     | NULL    |                |
++-------------------+---------------------+------+-----+---------+----------------+
+```
+Si nos dimos cuenta  elimino la tabla **users** y la volvio a crear junto con la tabla **password_resets**.
+Pero el comando **fresh** tiene una desventaja ya que para agregar una columna elimina todos los datos de las tablas (y esto no queremos cuando estemos en producción).
+
+#### update table
+Para insertar (actualizar) una columna a una tabla existente y que no nos borre los datos que ya tenemos debemos de crear una migración de actualización de esa tabla, automáticamente al escribir **_to_** y despues **el nombre de la tabla** laravel detecta que queremos modificar la tabla especificada y nos crea la función para modificarla.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:migration add_phone_to_users_table
+Created Migration: 2021_02_04_120629_add_phone_to_users_table
+```
+```php
+public function up(){
+   Schema::table('users', function (Blueprint $table) {
+      //
+   });
+}
+
+public function down(){
+   Schema::table('users', function (Blueprint $table) {
+      //
+   });
+}
+```
+Ahora especificamos la columna que deseamos añadir.
+```php
+public function up(){
+   Schema::table('users', function (Blueprint $table) {
+      $table->string('phone')->nullable();
+   });
+}
+public function down(){
+   Schema::table('users', function (Blueprint $table) {
+      $table->dropColumn('phone');
+   });
+}
+```
+Por último creamos la migración.
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate
+Migrating: 2021_02_04_120629_add_phone_to_users_table
+Migrated:  2021_02_04_120629_add_phone_to_users_table (0.13 seconds)
+```
+Pero hay una problema, ya que le campo lo puso al final.
+```console
++-------------------+---------------------+------+-----+---------+----------------+
+| Field             | Type                | Null | Key | Default | Extra          |
++-------------------+---------------------+------+-----+---------+----------------+
+| id                | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| name              | varchar(255)        | NO   |     | NULL    |                |
+| email             | varchar(6)          | NO   | UNI | NULL    |                |
+| email_verified_at | timestamp           | YES  |     | NULL    |                |
+| password          | varchar(255)        | NO   |     | NULL    |                |
+| remember_token    | varchar(100)        | YES  |     | NULL    |                |
+| created_at        | timestamp           | YES  |     | NULL    |                |
+| updated_at        | timestamp           | YES  |     | NULL    |                |
+| phone             | varchar(255)        | YES  |     | NULL    |                |
++-------------------+---------------------+------+-----+---------+----------------+
+```
+Esto se soluciona espeficicando en la migración después de que columna queremos que se añada, ejemplo.
+```php
+Schema::table('users', function (Blueprint $table) {
+   $table->string('phone')->after('email')->nullable();
+});
+```
+#### create table
+Vamos a crear una migración de proyectos.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:migration create_projects_table
+Created Migration: 2021_02_04_122813_create_projects_table
+```
+Archivo creado.
+```php
+Schema::create('projects', function (Blueprint $table) {
+   $table->bigIncrements('id');
+   $table->timestamps();
+});
+```
+Le añadimos unas columnas
+```php
+Schema::create('projects', function (Blueprint $table) {
+   $table->bigIncrements('id');
+   $table->string('title');
+   $table->text('description');
+   $table->timestamps();
+});
+```
+Y realizamos la migracion
+```console
+C:\wamp64\www\intro_laravel>php artisan migrate
+Migrating: 2021_02_04_122813_create_projects_table
+Migrated:  2021_02_04_122813_create_projects_table (0.11 seconds)
+```
+#### IMPORTANTE
+En el archivo de migración de **users** espeficicamente en la columna **$table->string('email')->unique();** no me dejo guardar en la tabla como **unique** me salia un error de que excedia la longitud de 1000 bytes y lo que pasaba esque creaba la tabla **users** con la columna pero sin el **unique** y lo peor esque como ocurria un error no se llenaba la tabla **migrations**, esto no debe de pasar ya que al hacer **rollback** a las migraciones primero se fija en la tabla **migrations** si cuenta con datos.
+
+Entonces para que pudiera crearse la migración sin problemas le di una longitud por defecto (por ahora de prueba).
+```php
+$table->string('email',6)->unique();
+```
+Y lo mismo me paso con el archivo de migracion de la tabla **password_reset** con la columna **$table->string('email')->index();**, en este caso a la columna no ponia como **index** tuve que ponerle una longitud por defecto tambien.
+```php
+$table->string('email',100)->index();
+```
+**Es recomendable verificar hasta que longitud se tiene permitido para establecer un index, unique y demás**

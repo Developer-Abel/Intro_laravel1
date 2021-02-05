@@ -4,9 +4,10 @@
 
 @section('content')
    <h1>Portafolio</h1>
-      @forelse ($portafolio as $porta)
-      <li>{{$porta['title']}} <small>{{$loop->last ? 'Es el ultimo': 'No es el ultimo'}}</small> </li>
+      @forelse ($proyectos as $proyecto)
+      <li>{{$proyecto->title}}</li>
       @empty
          <li>No hay proyectos</li>
       @endforelse
+      {{$proyectos->links()}}
 @endsection

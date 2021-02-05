@@ -1403,3 +1403,221 @@ Y lo mismo me paso con el archivo de migracion de la tabla **password_reset** co
 $table->string('email',100)->index();
 ```
 **Es recomendable verificar hasta que longitud se tiene permitido para establecer un index, unique y demás**
+
+### Obtener registros de la BD
+
+Para obtener los registros de la base de datos tenemos que crear un modelo, como ya tenemos la tabla projects vamos a crear su modelo.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:model Project
+Model created successfully.
+```
+
+La convención para nombrar el modelo es el de CamelCase, y laravel para saber de que tabla se trata convierte el nombre del modelo a minuscula y le agrega una **S**, pero por si la tabla esta escrito de manera diferente en el modelo podemos especificar su nombre de esta forma **protected $table = 'my_table'**.
+Pero bueno ya tenemos el modelo creado.
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Project extends Model{
+    //
+}
+```
+Para listar los datos en la vista, desde el controlador importamos el **modelo** y por medio de **Eloquent** hacemos una instancia del modelo y listo.
+```php
+namespace App\Http\Controllers;
+
+use App\Project;
+use Illuminate\Http\Request;
+
+class portafolioController extends Controller
+{
+  
+    public function index(){
+        $portafolio = Project::get();
+        // $portafolio =[
+        //     ['title'=>'Proyecto 1'],
+        //     ['title'=>'Proyecto 2'],
+        //     ['title'=>'Proyecto 3'],
+        //     ['title'=>'Proyecto 4'],
+        //     ];
+        return view('portfolio', compact('portafolio'));
+    }
+ 
+}
+```
+```php
+@extends('plantilla')
+
+@section('title','Portafolio')
+
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta['title']}} <small>{{$loop->last ? 'Es el ultimo': 'No es el ultimo'}}</small> </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+```
+Mi primer proyecto No es el ultimo
+Mi segundo proyecto No es el ultimo
+Mi tercer proyecto No es el ultimo
+Mi cuarto proyecto Es el ultimo
+```
+Vamos a cambiar la vista de la siguiente manera.
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta->title}} <br> <small>{{$porta->description}}</small> </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+#### orderBy()
+Y bueno ya teniendo el modelo le podemos decir que nos ordene de forma **descendente** por ejemplo
+```php
+$portafolio = Project::orderBy('created_at','DESC')->get();
+```
+```
+Mi cuarto proyecto
+Descripción de Mi cuarto proyecto
+Mi tercer proyecto
+Descripción de Mi tercer proyecto
+Mi segundo proyecto
+Descripción de Mi segundo proyecto
+Mi primer proyecto
+Descripción de Mi primer proyecto
+```
+#### latest()
+El método latest recibe como parámetro la columna que queremos ordenar **descendentemente** y si no le pasamos ninguno va a tomar el campo **created_at**.
+```php
+$portafolio = Project::latest('updated_at')->get();
+```
+#### Formato fechas
+Las fechas lo obtiene por medio de **carbon** asi que podemos darle formato por ejemplo para obtener el año.
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta->title}} <br> <small>{{$porta->description}}</small>
+      <br> {{$porta->created_at->format('Y')}} </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+```
+Mi cuarto proyecto
+Descripción de Mi cuarto proyecto
+2021
+Mi tercer proyecto
+Descripción de Mi tercer proyecto
+2021
+Mi segundo proyecto
+Descripción de Mi segundo proyecto
+2021
+Mi primer proyecto
+Descripción de Mi primer proyecto
+2021
+```
+Obtener el mes
+```php
+{{$porta->created_at->format('M')}}
+```
+Obtener el dia
+```php
+{{$porta->created_at->format('D')}}
+```
+Fecha completa
+```php
+{{$porta->created_at->format('Y-m-d')}}
+```
+Tambien esta **diffForHumans()** que nos muestra la diferencia de tiempo.
+```console
+mysql> select * from projects;
++----+---------------------+------------------------------------+---------------------+---------------------+
+| id | title               | description                        | created_at          | updated_at          |
++----+---------------------+------------------------------------+---------------------+---------------------+
+|  1 | Mi primer proyecto  | Descripción  de Mi primer proyecto | 2021-02-01 00:00:00 | 2021-02-01 00:00:00 |
+|  2 | Mi segundo proyecto | Descripción de Mi segundo proyecto | 2021-02-02 00:00:00 | 2021-02-02 00:00:00 |
+|  3 | Mi tercer proyecto  | Descripción de Mi tercer proyecto  | 2021-02-03 00:00:00 | 2021-02-03 00:00:00 |
+|  4 | Mi cuarto proyecto  | Descripción de Mi cuarto proyecto  | 2021-02-04 00:00:00 | 2021-02-04 00:00:00 |
++----+---------------------+------------------------------------+---------------------+---------------------+
+4 rows in set (0.00 sec)
+```
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta->title}} <br> <small>{{$porta->description}}</small>
+      <br> {{$porta->created_at->diffForHumans()}} </li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+@endsection
+```
+```
+Mi cuarto proyecto
+Descripción de Mi cuarto proyecto
+hace 1 día
+Mi tercer proyecto
+Descripción de Mi tercer proyecto
+hace 2 días
+Mi segundo proyecto
+Descripción de Mi segundo proyecto
+hace 3 días
+Mi primer proyecto
+Descripción de Mi primer proyecto
+hace 4 días
+```
+#### Paginación
+Vamos a dejar la vista con el titulo nadamas, y vamos a implementar la paginación, para eso en el controlador le añadimos el método **paginate** por defecto la paginación es de 5 elementos, pero como nosostros tenemos 4 vamos a dejarlo con 2.
+```php
+$portafolio = Project::latest()->paginate(2);
+```
+Y en la vista ponemos los links de paginación para poder visualizar los elementos.
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($portafolio as $porta)
+      <li>{{$porta->title}}</li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+      {{$portafolio->links()}}
+@endsection
+```
+**Importante** para mostrar los links debemos de hacer referencia al array, en este caso **$portafolio**.
+Y bueno se veria asi en el navegador, aunque sin estilo alguno.
+```
+Mi cuarto proyecto
+Mi tercer proyecto
+‹
+1
+2
+›
+```
+Por último vamos a cambiar las variables de portafolio a proyecto para que tenga mas lógica.
+```php
+public function index(){
+   $proyectos = Project::latest()->paginate(2);
+   return view('portfolio', compact('proyectos'));
+}
+```
+```php
+@section('content')
+   <h1>Portafolio</h1>
+   @forelse ($proyectos as $proyecto)
+      <li>{{$proyecto->title}}</li>
+   @empty
+      <li>No hay proyectos</li>
+   @endforelse
+   {{$proyectos->links()}}
+@endsection
+```

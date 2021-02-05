@@ -1621,3 +1621,163 @@ public function index(){
    {{$proyectos->links()}}
 @endsection
 ```
+### Obtener registros inividuales
+Para ver los detalles de cada proyecto primero debes de encerrarlos en un link y pasar en el **href** el id del proyecto, si solo pasamos el alias del for laravel tomara el id automaticamente **pero solo si tu id se llamas asi como tal "id" por que por ejemplo si se llama "id_proyecto" no funciona**
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($proyectos as $proyecto)
+         <li><a href="{{route('portafolio.show',$proyecto)}}">{{$proyecto->title}}</a></li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+      {{$proyectos->links()}}
+@endsection
+```
+Ahora vamos a crear la ruta que le estamos indicando, y vamos a ponerle como nombre **portafolio.show**
+```php
+Route::get('/portfolio/{id}','portafolioController@show')->name('portafolio.show');
+```
+Y por último vamos a crear la función **show** dentro del controlador, y vamos a usar el método **find** para encontrar el elemento.
+```php
+public function show($id){
+   return Project::find($id);
+}
+```
+Resultado.
+```json
+{
+"id": 4,
+"title": "Mi cuarto proyecto",
+"description": "Descripción de Mi cuarto proyecto",
+"created_at": "2021-02-04 00:00:00",
+"updated_at": "2021-02-04 00:00:00"
+}
+```
+Laravel automaticamente lo convierte en formato **json**.
+
+Vamos a crear una vista para mostrar los datos individuales en la ruta **view/projects/show.blade.php** y ocupando las mismas cabeceras vamos a mostrar los datos un poco mas ordenados.
+```php
+@extends('plantilla')
+
+@section('title', 'Portafolio |'. $project->title)
+
+@section('content')
+    <h1>{{$project->title}}</h1>
+    <p>{{$project->description}}</p>
+    <p>{{$project->created_at->diffForHumans()}}</p>
+@endsection
+```
+
+Ahora vamos a crear la variable **$project** en el controlador, y pasarlo a la vista.
+```php
+public function show($id){
+   $project = Project::find($id);
+   return view('projects.show',[
+      'project' => $project
+   ]);
+}
+```
+Listo ya tenemos nuestra vista, ahora cuando le demos click a cualquier proyecto nos saldra la descripcion en otra vista.
+
+#### Personalizando erro 404
+Pero que pasa si tratan de acceder a un proyecto que no existe, para eso debemos de modificar en el controladro para que falle si un registro no lo encuentra (esto va hacer que nos muestre un error 404).
+```php
+public function show($id){
+   $project = Project::findOrFail($id);
+   return view('projects.show',[
+      'project' => $project
+   ]);
+}
+```
+Cambiando de **find()** a **findOrFail()**, ahora si queremos personalizar el error 404 debemos de crear un archivo en la siguiente ruta, **view/errors/404.blade.php**, y por ahora le vamos a poner **error personalizado** dentro del archivo y listo.
+
+### Restructuración
+Vamos a modificar algunos archivos para que tenga una convención tanto los nombres como las rutas.
+
+En el controlador la vista vamos a cambiarle de nombre **project.index**
+```php
+class portafolioController extends Controller{
+    public function index(){
+        $proyectos = Project::latest()->paginate();
+        return view('projects.index', compact('proyectos'));
+    }
+```
+Y para esto tenemos que renombrar la ruta **view/projects/index.blade.php** (y todo lo del archivo potafolio va a estar en este archivo), ya podemos eliminar el archivo **porfolio.blade.php**.
+
+Vamos a renombrar el controlador de **portafolioController** a **ProjectController** (según la convención de laravel, el nombre del modelo debe de ser el mismo que el controlador+Controller).
+```php
+class ProjectController extends Controller{
+    public function index(){
+        $proyectos = Project::latest()->paginate();
+        return view('projects.index', compact('proyectos'));
+    }
+    public function show($id){
+        $project = Project::findOrFail($id);
+        return view('projects.show',[
+            'project' => $project
+        ]);
+    }
+}
+```
+También le cambiamos de nombre al archivo y a las rutas.
+```php
+Route::get('/portfolio','ProjectController@index')->name('projects.index');
+Route::get('/portfolio/{id}','ProjectController@show')->name('projects.show');
+```
+Actualizamos las rutas en el **nav**
+```php
+<li class="{{setActive('projects.*')}}"><a href="{{route('projects.index')}}">Portafolio</a></li>
+```
+También en el **index**
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @forelse ($proyectos as $proyecto)
+      <li><a href="{{route('projects.show',$proyecto)}}">{{$proyecto->title}}</a></li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+      {{$proyectos->links()}}
+@endsection
+```
+Y ya que estamos en eso, vamos a actualizar completamente el nav de acuerdo a los nombres de las rutas.
+```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="{{route('acerca')}}">About</a></li>
+       <li class="{{setActive('projects.*')}}"><a href="{{route('projects.index')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{route('contacto')}}">Contacto</a></li>
+    </ul>
+ </nav>
+ ```
+ Todas las rutas.
+ ```php
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+Route::get('/portfolio','ProjectController@index')->name('projects.index');
+Route::get('/portfolio/{id}','ProjectController@show')->name('projects.show');
+Route::view('/contact','contact')->name('contacto');
+Route::post('contact','MessageController@store')->name('contacto');
+```
+Pero vemos que el nombre **contacto** se repite, vamos a cambiarlo.
+```php
+Route::post('contact','MessageController@store')->name('messages.store');
+```
+También en el formulario de **contact.blade**
+```php
+<form action="{{route('messages.store')}}" method="POST">
+   @csrf
+   <input type="text" name="nombre" placeholder="nombre"><br>
+   {!! $errors->first('nombre','<small>:message</small><br>')!!}
+   <input type="text" name="email" placeholder="email"><br>
+   {!! $errors->first('email','<small>:message</small><br>')!!}
+   <input type="text" name="asunto" placeholder="asunto"><br>
+   {!! $errors->first('asunto','<small>:message</small><br>')!!}
+   <textarea name="mensaje" id="" cols="30" rows="5"></textarea> <br>
+   {!! $errors->first('mensaje','<small>:message</small><br>')!!}
+   <button type="submit">Enviar</button>
+</form>
+```
+Y listo podemos continuar.

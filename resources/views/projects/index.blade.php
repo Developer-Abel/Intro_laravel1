@@ -5,7 +5,7 @@
 @section('content')
    <h1>Portafolio</h1>
       @forelse ($proyectos as $proyecto)
-      <li>{{$proyecto->title}}</li>
+      <li><a href="{{route('projects.show',$proyecto)}}">{{$proyecto->title}}</a></li>
       @empty
          <li>No hay proyectos</li>
       @endforelse

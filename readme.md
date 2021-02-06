@@ -1868,3 +1868,107 @@ public function boot(){
    Schema::defaultStringLength(191);
 }
 ```
+### Insertar datos a la base de datos
+Vamos a crear la ruta para el formulario de crear proyectos y lo llamaremos **projects.create**, algo importante es el orden de las rutas, ya que la ruta **projects.show** tiene en su url un parámetro y si se pone primero cuando intentemos acceder a la ruta **portafolio/crear** laravel va a detectar el **crear** como un parametro y va a dar error, es po eso que primero debe de estar el método **create** y después el **show** asi cuando no encuentre un parametro se pasa a la otra ruta.
+```php
+Route::get('/portfolio','ProjectController@index')->name('projects.index');
+Route::get('/portfolio/crear','ProjectController@create')->name('projects.create');
+Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
+```
+Ahora vamos a crear el método en el controlador y retornamos la vista.
+```php
+public function create (){
+   return view('projects.create');
+}
+```
+Por último vamos a crear la vista **view/projects/create.blade.php**
+```php
+@section('title','Crear proyecto')
+
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+   <form>
+       <label for="">Título <br> <input type="text" name="title"></label> <br>
+       <label for="">Url <br> <input type="text" name="url"></label> <br>
+       <label for="">Descripción <br> <textarea name="description" id="" cols="20" rows="5"></textarea></label> <br> <br>
+       <button>Guardar</button>
+</form>
+@endsection
+```
+Hasta ahora nos muestra el formulario, pero aún nos falta agregar el tipo de método y la acción, de igual forma el token oculto **@csrf**.
+```php
+<form action="{{route('projects.store')}}" method="POST">
+    @csrf
+       <label for="">Título <br> <input type="text" name="title"></label> <br>
+       <label for="">Url <br> <input type="text" name="url"></label> <br>
+       <label for="">Descripción <br> <textarea name="description" id="" cols="20" rows="5"></textarea></label> <br> <br>
+       <button>Guardar</button>
+</form>
+```
+Pues bien vamos a crear la ruta que indica la acción (**store**).
+```php
+Route::get('/portfolio','ProjectController@index')->name('projects.index');
+Route::get('/portfolio/crear','ProjectController@create')->name('projects.create');
+Route::post('/portfolio','ProjectController@store')->name('projects.store');
+Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
+```
+Y agregamos la función **strore** en el controlador.
+```php
+public function store(){
+return request();
+}
+```
+Con el **request()** vamos a visualizar lo que se escribio en el formulario incluyendo el token oculto, ahora de los valores vamos a insertarla en la base de datos y de una vez cuando se inserte que nos redirija al index (donde se enlistan los proyectos).
+```php
+public function store(){
+   Project::create([
+      'title' => request('title'),
+      'url' => request('url'),
+      'description' => request('description')
+   ]);
+
+   return redirect()->route('projects.index');
+}
+```
+Si intentamos guaradar nos va a dar un error, ya que los campos que especificamos no lo hemos declarado en el modelo, asi que vamos a declararlos.
+```php
+class Project extends Model{
+    protected $fillable = ['title','url','description'];
+}
+```
+Con esto ya debe de guardar a la base de datos y redirigir a la vista index, vamos a crear el boton para crear un nuevo proyecto (en este caso va hacer una etiqueta <a>).
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      <a href="{{route('projects.create')}}">Nuevo proyecto</a>
+      <br>
+      @forelse ($proyectos as $proyecto)
+      <li><a href="{{route('projects.show',$proyecto)}}">{{$proyecto->title}}</a></li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+      {{$proyectos->links()}}
+@endsection
+```
+Algo importante en el controlador cuando las variables sean iguales que el nombre de su columna en la base de datos se puede simplificar incluyendo **request()->all()**.
+```php
+public function store(){
+   Project::create([
+      'title' => request('title'),
+      'url' => request('url'),
+      'description' => request('description')
+   ]);
+
+   return redirect()->route('projects.index');
+}
+```
+```php
+public function store(){
+   Project::create([
+      request()->all()
+      ]);
+
+   return redirect()->route('projects.index');
+}
+```
+Y obtenemos el mismo resultado.

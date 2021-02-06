@@ -1972,3 +1972,53 @@ public function store(){
 }
 ```
 Y obtenemos el mismo resultado.
+
+### Protección de datos de forma masiva (request()->all())
+Cuando se utiliza la inserción de datos de forma masiva (cuando se ocupa request()->all()), contamos con un riesgo ya que en el formulario se pueden añadir mas inputs y modificar datos (como el id, created_at ...), para esto podemos solucionarlo de varias maneras.
+
+Ingresando en el modelo los campos que vamos a utilizar por medio de **$fillable**
+```php
+class Project extends Model{
+   protected $fillable = ['title','url','description'];
+}
+```
+O lo inverso podemos declarar los campos con *$guarded* que no se tienen que guardar masivamente.
+```php
+class Project extends Model{
+   protected $guarded = ['id','created_at','updated_at'];
+}
+```
+
+Si declaramos el **$guarded** como vacio y sin declarar el **$fillable**  estaremos desprotegidos contra la inserción masiva;
+```php
+class Project extends Model{
+   protected $guarded = [];
+}
+```
+y podemos protejernos en el controlador de el método **only** que esto permite agregar en la base de datos lo que le especifiquemos en el parametro.
+```php
+public function store(){
+   Project::create([
+      request()->only('title','url','description')
+      ]);
+
+   return redirect()->route('projects.index');
+}
+```
+La otra forma y la mas optima es crear una validación y asegnarle una variable (en este caso **$datos**) y esta variable es la que pasamos al **create** como parámetro para que se guarde en la base de datos.
+```php
+public function store(){
+        $datos = request()->validate([
+            'title' => 'required',
+            'url' => 'required',
+            'description' => 'required'
+        ]);
+        Project::create($datos);
+
+        return redirect()->route('projects.index');
+    }
+```
+A partir de ahora si queremos agregar otro campo en el formulario solo lo tenemos que declarar en la validación y listo.
+
+#### IMPORTANTE
+podemos desabilitar la protección que viene por defecto en laravel **protected $guarded = [];** solo si no utilizamos la inserción masiva **request()->all()**.

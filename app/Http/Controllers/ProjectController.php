@@ -22,13 +22,12 @@ class ProjectController extends Controller{
     }
 
     public function store(){
-        // return request();
-        // request()->all();
-        Project::create([
-            'title' => request('title'),
-            'url' => request('url'),
-            'description' => request('description')
+        $datos = request()->validate([
+            'title' => 'required',
+            'url' => 'required',
+            'description' => 'required'
         ]);
+        Project::create($datos);
 
         return redirect()->route('projects.index');
     }

@@ -10,8 +10,8 @@ class ProjectController extends Controller{
         $proyectos = Project::latest()->paginate();
         return view('projects.index', compact('proyectos'));
     }
-    public function show($id){
-        $project = Project::findOrFail($id);
+    public function show(Project $project){
+        // $project = Project::findOrFail($id);
         return view('projects.show',[
             'project' => $project
         ]);

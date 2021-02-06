@@ -1781,3 +1781,90 @@ También en el formulario de **contact.blade**
 </form>
 ```
 Y listo podemos continuar.
+
+### Route Model Binding
+Podemos pasar el modelo en el constructor lo busca automaticamente, para probarlo vamos a ingresar el modelo en el constructor de esta manera.
+
+```php
+public function show(Project $project){
+   // $project = Project::findOrFail($id);
+   return view('projects.show',[
+      'project' => $project
+   ]);
+}
+```
+y en la ruta en ves de pasarle **id** vamos a pasarle el **project** esto para que tenga coherencia y vamos a seguir teniendo el mismo resultado.
+```php
+Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
+```
+#### buscando proyecto por titulo
+Laravel tiene un método en donde establece la busqueda por id, para verificarlo nos vamos al modelo y despues al archivo que extiende del modelo, en este archivo hay un método.
+```php
+public function getRouteKeyName(){
+   return $this->getKeyName();
+}
+```
+Y este a su vez llama a **getKeyName()**
+```php
+public function getKeyName(){
+   return $this->primaryKey;
+}
+```
+Como vemos aqui es donde llama al id de la tabla, pero podemos cambiarlo y ponerle el campo que queramos que busque ejmeplo**return $this->title;**.
+Pero como no debemos de modificar los archivos internos de laravel ya que al actualizar perderemos los cambios, asi aque en el modelo vamos a sobreescribir el método.
+```php
+class Project extends Model{
+   public function getRouteKeyName(){
+      return 'title';
+   }
+}
+```
+Ahora si damos click en el proyecto vamos a ver en la url así.
+```
+http://localhost:8000/portfolio/Mi%20primer%20proyecto
+```
+Ya lo muestra por el título del proyecto pero ahora el problema esque las rutas no deben de tener espacios porque los espacios los codifica y devuelve **%20** y eso no se ve bien, lo ideal seria que lo sustituyera por un guion **-**.
+Para solucionar esto debemos de crear una nueva columna en la tabla llamada **url** y almacenaremos el titulo del proyecto pero con guiones ejem. **Mi-primer-proyecto** y asi ya no habria espacios.
+Vamos primero a crear las migraciones.
+```console
+C:\wamp64\www\intro_laravel> php artisan make:migration add_url_to_projects_table
+Created Migration: 2021_02_06_105559_add_url_to_projects_table
+```
+Creamos el campo **url** lo establecemos como único para que no existan 2 url iguales y que este despues de la columna **description**.
+```php
+public function up(){
+   Schema::table('projects', function (Blueprint $table) {
+      $table->string('url')->after('description')->unique();
+   });
+}
+```
+creamos la migración.
+```
+C:\wamp64\www\intro_laravel> php artisan migrate
+Migrating: 2021_02_06_105559_add_url_to_projects_table
+Migrated:  2021_02_06_105559_add_url_to_projects_table (0.2 seconds)
+```
+Y listo, ahora llenamos la columna **url** con los nombres de los proyectos con guiones.
+```console
++----+---------------------+------------------------------------+---------------------+---------------------+---------------------+
+| id | title               | description                        | url                 | created_at          | updated_at          |
++----+---------------------+------------------------------------+---------------------+---------------------+---------------------+
+|  1 | Mi primer proyecto  | Descripción de Mi primer proyecto  | Mi-primer-proyecto  | 2021-02-01 00:00:00 | 2021-02-01 00:00:00 |
+|  2 | Mi segundo proyecto | Descripción de Mi segundo proyecto | Mi-segundo-proyecto | 2021-02-03 00:00:00 | 2021-02-03 00:00:00 |
+|  3 | Mi tercer proyecto  | Descripción de Mi tercer proyecto  | Mi-tercer-proyecto  | 2021-02-04 00:00:00 | 2021-02-04 00:00:00 |
+|  4 | Mi cuarto proyecto  | Descripción de Mi cuarto proyecto  | Mi-cuarto-proyecto  | 2021-02-05 00:00:00 | 2021-02-05 00:00:00 |
++----+---------------------+------------------------------------+---------------------+---------------------
+```
+Ahora en el modelo en ves de apuntar al **title** vamos a decirle que lo busque por la **url**
+```php
+public function getRouteKeyName(){
+   return 'url';
+}
+```
+#### IMPORTANTE
+En la migración cuando actualice la **url** como le puse **unique** me arrojo un error que la longitud de bytes debe de ser menor que 1000, bueno esto sucede por la versión de mysql y también por que laravel añadio un char set que es **utf8mb4** el cual soporta emojis, pero esto lo podemos solucionar en el archivo que esta **Providers/AppServiceProvider.php** y agregamos lo siguiente en la función boot().
+```php
+public function boot(){
+   Schema::defaultStringLength(191);
+}
+```

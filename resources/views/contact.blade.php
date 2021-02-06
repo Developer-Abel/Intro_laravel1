@@ -9,7 +9,7 @@
    @if ($errors->any())
       {{var_dump($errors->all())}}
    @endif
-   <form action="{{route('contacto')}}" method="POST">
+   <form action="{{route('messages.store')}}" method="POST">
       @csrf
       <input type="text" name="nombre" placeholder="nombre"><br>
       {!! $errors->first('nombre','<small>:message</small><br>')!!}

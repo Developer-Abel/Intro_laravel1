@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Project;
 use Illuminate\Http\Request;
-use App\Http\Requests\CreateProyectRequest;
+use App\Http\Requests\SaveProyectRequest;
 
 class ProjectController extends Controller{
     public function index(){
@@ -22,8 +22,17 @@ class ProjectController extends Controller{
        return view('projects.create');
     }
 
-    public function store(CreateProyectRequest $request){
+    public function store(SaveProyectRequest $request){
         Project::create($request->validated());
         return redirect()->route('projects.index');
+    }
+    public function edit(Project $project){
+        return view('projects.edit',[
+            'project' =>$project
+        ]);
+    }
+    public function update(Project $project, SaveProyectRequest $request){
+        $project->update( $request->validated() );
+        return redirect()->route('projects.show', $project);
     }
 }

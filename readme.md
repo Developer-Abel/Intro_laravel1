@@ -2121,3 +2121,122 @@ public function store(CreateProyectRequest $request){
 }
 ```
 Hasta este momento al crear un pryecto no debe de redirigir al listado sin ningun error.
+
+### Actualizar registros
+Para actualizar un registro primero vamos a poner un link que nos lleve a la ruta **project.edit** en la vista **show** donde estan los detalle de cada proyecto, pasandole el proyecto como parámetro.
+```php
+@section('content')
+    <h1>{{$project->title}}</h1>
+    <a href="{{route('project.edit',$project)}}">Editar</a>
+    <p>{{$project->description}}</p>
+    <p>{{$project->created_at->diffForHumans()}}</p>
+@endsection
+```
+Creamos la ruta y lo redirecionamos al método **edit**, laravel detecta automaticamente que lo que le estan pasando como parámetro es el **id**.
+```php
+Route::get('/portfolio/{project}/editar','ProjectController@edit')->name('project.edit');
+```
+Ahora creamos el método en el controlador, y lo vamos a reditigir a la vista **edit** pasandole como parámetro el proyecto.
+```php
+public function edit(Project $project){
+   return view('projects.edit',[
+      'project' =>$project
+   ]);
+}
+```
+Procedemos a crear al vista **project/edid.blade.php** y va a ser similar a la vista create, le dejamos los errores de validación ya que lo vamos a utilizar mas después.
+```php
+@section('content')
+   <h1>Editar proyecto</h1>
+    @if ($errors->any())
+        
+      <ul>
+         @foreach ($errors->all() as $error)
+             <li>{{$error}}</li>
+         @endforeach
+      </ul>
+    @endif
+   <form action="" method="POST">
+    @csrf
+       <label for="">Título <br> <input type="text" name="title"></label> <br>
+       <label for="">Url <br> <input type="text" name="url"></label> <br>
+       <label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5"></textarea></label> <br> <br>
+       <button>guardar</button>
+</form>
+@endsection
+```
+Como estamos pasando el proyecto por la url vamos a reflejarlo en cada uno de los inputs, y al botón lo cambiamos como actualizar.
+```php
+<form action="" method="POST">
+@csrf
+   <label for="">Título <br> <input type="text" name="title" value="{{$project->title}}"></label> <br>
+   <label for="">Url <br> <input type="text" name="url" value="{{$project->url}}"></label> <br>
+   <label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5">{{$project->description}}</textarea></label> <br> <br>
+   <button>Actualizar</button>
+</form>
+```
+Continuamos con la actualización de los datos, laravel solo tiene activado los métodos **post y get** pero no **patch,put ni delete** asi que para que se de cuenta que queremos utilizar el método **patch** vamos a pasarle un input oculto o con la directiva **@method('PATCH')**.
+También vamos a agregar la ruta para la actualización **project.update**.
+```php
+<form action="{{route('project.update', $project)}}" method="POST">
+    @csrf @method('PATCH')
+       <label for="">Título <br> <input type="text" name="title" value="{{$project->title}}"></label> <br>
+       <label for="">Url <br> <input type="text" name="url" value="{{$project->url}}"></label> <br>
+       <label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5">{{$project->description}}</textarea></label> <br> <br>
+       <button>Actualizar</button>
+    </form>
+```
+Vamos a crear la ruta de actualización con el método **patch** como lo indicamos en el formulario y vamos a utilizar la función **update** en el controlador.
+```php
+Route::patch('/portfolio/{project}','ProjectController@update')->name('project.update');
+```
+
+Creamos el método en el controlador utilizando el modelo **Project**, pasamos los parámetros de las columnas a actualizar y redirigiendo a los detalles del proyecto (show).
+```php
+public function update(Project $project){
+   $project->update([
+      'title' => request('title'),
+      'url' => request('url'),
+      'description' => request('description'),
+   ]);
+   return redirect()->route('projects.show', $project);
+    }
+```
+Pero si queremos validar nuevamente los campos tenemos que crear otro archivo de validación, aun que viendolo bien son los mismos campos asi que mejor vamos a reutilizar el que ya tenemos y solo le cambiamos de nombre al archivo para que se a mas genérico de **Http/Request/CreateProjectRequest.php** a **Http/Request/SaveProjectRequest.php** hacemos igual con la clase.
+```php
+class SaveProyectRequest extends FormRequest{
+...
+}
+```
+Y en el controlador modificamos el nombre de como se llama a este archivo de validación y lo añadimos al método **update**.
+```php
+use App\Http\Requests\SaveProyectRequest;
+public function store(SaveProyectRequest $request){ ...}
+
+public function update(Project $project, SaveProyectRequest $request){
+   $project->update( $request->validated() );
+   return redirect()->route('projects.show', $project);
+}
+```
+Ahora cuando no se escriba nada en algún campo a la hora de actualizar va a fallar y nos va a mostrar el mensaje de error.
+Pero ahora el problema es que si actualizamos los campos y si uno llega a fallar vuelven todo los campos a su valor original, lo cual es un poco molesto estar reinscribiendo todo de nuevo, pero esto se puede eliminar con **old()**.
+```php
+<form action="{{route('project.update', $project)}}" method="POST">
+@csrf @method('PATCH')
+   <label for="">Título <br> <input type="text" name="title" value="{{old('title',$project->title)}}"></label> <br>
+   <label for="">Url <br> <input type="text" name="url" value="{{old('url',$project->url)}}"></label> <br>
+   <label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5">{{old('description',$project->description)}}</textarea></label> <br> <br>
+   <button>Actualizar</button>
+</form>
+```
+Con esto cuando falle algún campo los demas quedan con sus valores, ahora vamos a pasar este **old()** al formulario donde se crean los proyectos.
+```php
+<form action="{{route('projects.store')}}" method="POST">
+    @csrf
+       <label for="">Título <br> <input type="text" name="title" value="{{old('title')}}"></label> <br>
+       <label for="">Url <br> <input type="text" name="url" value="{{old('url')}}"></label> <br>
+       <label for="">Descripción <br> <textarea name="description" id="" cols="20" rows="5">{{old('description')}}</textarea></label> <br> <br>
+       <button>Guardar</button>
+</form>
+```
+

@@ -5,6 +5,8 @@ Route::view('/about','about')->name('acerca');
 
 Route::get('/portfolio','ProjectController@index')->name('projects.index');
 Route::get('/portfolio/crear','ProjectController@create')->name('projects.create');
+Route::get('/portfolio/{project}/editar','ProjectController@edit')->name('project.edit');
+Route::patch('/portfolio/{project}','ProjectController@update')->name('project.update');
 Route::post('/portfolio','ProjectController@store')->name('projects.store');
 Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
 

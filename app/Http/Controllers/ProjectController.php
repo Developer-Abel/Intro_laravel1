@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Project;
 use Illuminate\Http\Request;
+use App\Http\Requests\CreateProyectRequest;
 
 class ProjectController extends Controller{
     public function index(){
@@ -21,14 +22,8 @@ class ProjectController extends Controller{
        return view('projects.create');
     }
 
-    public function store(){
-        $datos = request()->validate([
-            'title' => 'required',
-            'url' => 'required',
-            'description' => 'required'
-        ]);
-        Project::create($datos);
-
+    public function store(CreateProyectRequest $request){
+        Project::create($request->validated());
         return redirect()->route('projects.index');
     }
 }

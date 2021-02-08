@@ -2022,3 +2022,102 @@ A partir de ahora si queremos agregar otro campo en el formulario solo lo tenemo
 
 #### IMPORTANTE
 podemos desabilitar la protección que viene por defecto en laravel **protected $guarded = [];** solo si no utilizamos la inserción masiva **request()->all()**.
+
+### Form requests (validación)
+Los forms requests son pensados para validaciones complejos, clases dedicadas para encapsular la lógica de validación y autorización.
+Para crearla es con el siguiente comando.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:request CreateProyectRequest
+Request created successfully.
+```
+Nos crea una carpeta y el archivo **app/http/Requests/CreateProyectRequest.php** y dentro tenemos 2 métodos, en el **authorize** es donde verificamos la autorización si es **admin,cliente,user, etc.** si retorna **false** arroja un **error 403 forbiden**, pero si pasa ingresan a las reglas **(rules)**.
+```php
+public function authorize(){
+        return false;
+    }
+```
+Las reglas reciben un array, como la que habiamos declarado en el controlador.
+```php
+public function rules(){
+   return [
+      //
+   ];
+}
+```
+Pues bien vamos a dejar en la función **authorize** como **true** para que pase por el momento y asi verifiquemos las reglas.
+```php
+public function authorize(){
+   return true;
+}
+```
+Y en la función **rules** ingresamos las validaciones que teniamos en el controlador **ProjectController**.
+```php
+public function rules(){
+   return [
+      'title' => 'required',
+      'url' => 'required',
+      'description' => 'required'
+   ];
+}
+```
+Ya tenemos las validaciones ahora solo ahi que llamarlo desde el controlador, (**importarlo**), y despues retornar el request para verificar si esta tomando las validaciones.
+```php
+use App\Http\Requests\CreateProyectRequest;
+
+public function store(CreateProyectRequest $request){
+   return $request->validated();
+   // $datos = request()->validate([
+   //     'title' => 'required',
+   //     'url' => 'required',
+   //     'description' => 'required'
+   // ]);
+   // Project::create($datos);
+
+   // return redirect()->route('projects.index');
+}
+```
+Antes de probarlo vamos a la vista a verificar los errores, para eso lo vamos a encapsular en un **foreach**
+```php
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+    @if ($errors->any())
+        
+      <ul>
+         @foreach ($errors->all() as $error)
+             <li>{{$error}}</li>
+         @endforeach
+      </ul>
+    @endif
+   <form action="{{route('projects.store')}}" method="POST">
+    @csrf
+       <label for="">Título <br> <input type="text" name="title"></label> <br>
+       <label for="">Url <br> <input type="text" name="url"></label> <br>
+       <label for="">Descripción <br> <textarea name="description" id="" cols="20" rows="5"></textarea></label> <br> <br>
+       <button>Guardar</button>
+</form>
+@endsection
+```
+Ahora si no llenamos los campos guardamos, nos va a arrojar los errores de validación, de lo contrario nos muestra los datos del formulario, y como no estamos utilizando **$request->all()** no nos devuelve el **token**.
+Por último vamos a personalizar los mensajes de las reglas.
+```php
+public function rules(){
+   return [
+      'title' => 'required',
+      'url' => 'required',
+      'description' => 'required'
+   ];
+}
+public function messages(){
+   return [
+      'title.required' => 'El Proyecto necesita un título',
+   ];
+}
+```
+Y dejemos que cree el proyecto si los campos del formulario no estan vacios.
+```php
+public function store(CreateProyectRequest $request){
+   Project::create($request->validated());
+   return redirect()->route('projects.index');
+}
+```
+Hasta este momento al crear un pryecto no debe de redirigir al listado sin ningun error.

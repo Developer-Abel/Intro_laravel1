@@ -19,7 +19,9 @@ class ProjectController extends Controller{
     }
 
     public function create (){
-       return view('projects.create');
+       return view('projects.create',[
+           'project' => new Project()
+       ]);
     }
 
     public function store(SaveProyectRequest $request){

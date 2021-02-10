@@ -2239,4 +2239,147 @@ Con esto cuando falle algún campo los demas quedan con sus valores, ahora vamos
        <button>Guardar</button>
 </form>
 ```
+### Reutilizando Formulario
+Vamos a crear archivos parciales de los segmentos iguales que contienen en los formularios de **create** y **edit**.
 
+Comenzaremos con los errores, vamos a crear un archivo dentro de la carpeta **partials/validation-errors.blade.php** e incluimos los errores.
+```php
+/* Archivo editar */
+@section('content')
+   <h1>Editar proyecto</h1>
+    @if ($errors->any())
+        
+      <ul>
+         @foreach ($errors->all() as $error)
+             <li>{{$error}}</li>
+         @endforeach
+      </ul>
+    @endif
+```
+```php
+/* Archivo crear */
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+    @if ($errors->any())
+        
+      <ul>
+         @foreach ($errors->all() as $error)
+             <li>{{$error}}</li>
+         @endforeach
+      </ul>
+    @endif
+```
+```php
+/* Archivo validation-errors.blade */
+@if ($errors->any())
+<ul>
+    @foreach ($errors->all() as $error)
+        <li>{{$error}}</li>
+    @endforeach
+</ul>
+@endif
+```
+Ahora inluimos en ambos formularios.
+```php
+@section('content')
+   <h1>Editar proyecto</h1>
+   @include('partials/validation-errors')
+```
+```php
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+   @include('partials/validation-errors')
+```
+Seguimos con los inputs, vamos a crear un archivo separado para tener todos los inputs de cada formulario y después incluirlos como lo hicimos con los errores.
+Pero aqui hay un problema ya que en el achivo **create** los inputs solo tiene un parámetro en la función **old()**.
+```php
+<label for="">Título <br> <input type="text" name="title" value="{{old('title')}}"></label> <br>
+```
+Y en el archivo **edit** tiene 2 parámetros.
+```php
+<label for="">Título <br> <input type="text" name="title" value="{{old('title',$project->title)}}"></label> <br>
+```
+Si empatamos para que la función **old** tenga 2 parámetros en ambos casos, va a fallar ya que en el archivo **create** no se tiene declarado esas variables, entonces vamos a realizar una instancia del proyecto en el controlador, asi pasamos todas las columas como **null**.
+```php
+class ProjectController extends Controller{
+   public function index(){....}
+   public function show(Project $project){....}
+   public function create (){
+      return view('projects.create',[
+         'project' => new Project()
+      ]);
+   }
+}
+```
+Ahora si vamos a crear el archivo parcial de los inputs, este archivo va a estar en **view/projets/_form.blade.php**.
+```php
+<label for="">Título <br> <input type="text" name="title" value="{{old('title',$project->title)}}"></label> <br>
+<label for="">Url <br> <input type="text" name="url" value="{{old('url',$project->url)}}"></label> <br>
+<label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5">{{old('description',$project->description)}}</textarea></label> <br> <br>
+```
+Después lo incluimos en los archivos **create** y **edit**.
+```php
+@section('content')
+   <h1>Editar proyecto</h1>
+   @include('partials/validation-errors')
+   <form action="{{route('project.update', $project)}}" method="POST">
+    @csrf @method('PATCH')
+      @include('projects/_form')
+      <button>Actualizar</button>
+    </form>
+@endsection
+```
+```php
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+   @include('partials/validation-errors')
+   <form action="{{route('projects.store')}}" method="POST">
+    @csrf
+      @include('projects/_form')
+      <button>Guardar</button>
+   </form>
+@endsection
+```
+Tambien podemos hacer dinámico los botones pasandole como segundo parámetro en cada **inlude()** el texto del botón.
+```php
+@include('projects/_form',['btnText' => 'Actualizar'])
+```
+```php
+@include('projects/_form',['btnText' => 'Guardar'])
+```
+Y en el archivo **_form** ponemos el boton con la variable que ya delcaramos.
+```php
+<button>{{$btnText}}</button>
+```
+Por último se nos estaba pasando incluir en el archivo **_form** el **@csrf** ya que en los 2 casos se utiliza, y al final queda asi.
+```php
+@csrf
+<label for="">Título <br> <input type="text" name="title" value="{{old('title',$project->title)}}"></label> <br>
+<label for="">Url <br> <input type="text" name="url" value="{{old('url',$project->url)}}"></label> <br>
+<label for="">Descripción <br> <textarea name="description"  id="" cols="20" rows="5">{{old('description',$project->description)}}</textarea></label> <br> <br>
+
+<button>{{$btnText}}</button>
+```
+```php
+/* archivo edit */
+@section('content')
+   <h1>Editar proyecto</h1>
+   @include('partials/validation-errors')
+   <form action="{{route('project.update', $project)}}" method="POST">
+      @method('PATCH')
+      @include('projects/_form',['btnText' => 'Actualizar'])
+    </form>
+@endsection
+```
+```php
+/* archivo create*/
+@section('content')
+   <h1>Crear nuevo proyecto</h1>
+   @include('partials/validation-errors')
+   <form action="{{route('projects.store')}}" method="POST">
+
+      @include('projects/_form',['btnText' => 'Guardar'])
+   </form>
+@endsection
+```
+Y con esto ya tenemos los valores iguales separados en diferentes archivos, esto hace que este un poco mas ordenado el código.

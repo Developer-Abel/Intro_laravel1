@@ -26,7 +26,7 @@ class ProjectController extends Controller{
 
     public function store(SaveProyectRequest $request){
         Project::create($request->validated());
-        return redirect()->route('projects.index');
+        return redirect()->route('project.index');
     }
     public function edit(Project $project){
         return view('projects.edit',[
@@ -35,11 +35,11 @@ class ProjectController extends Controller{
     }
     public function update(Project $project, SaveProyectRequest $request){
         $project->update( $request->validated() );
-        return redirect()->route('projects.show', $project);
+        return redirect()->route('project.show', $project);
     }
 
     public function destroy(Project $project){
         $project->delete();
-        return redirect()->route('projects.index');
+        return redirect()->route('project.index');
     }
 }

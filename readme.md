@@ -2458,3 +2458,89 @@ protected $primaryKey = 'id';
 ```
 Lo que quiere decir que al llamar el método **delete()** hace todo este proceso y por último determina que tiene que eliminar el proyecto con el id que se le esta pasando.
 NOTA: para que esto funcione la tabla **projects** debe de tener su **primaryKey** como **id** de no ser asi en el modelo se debe especificar como se llama el **primaryKey** ya que como vimos para eliminar hace referencia al **primaryKey**.
+
+### Route Resource
+En las rutas vamos a utilizar **resource** para simplificar las rutas a una sola, por el momento tenemos estas rutas:
+```php
+Route::get('/portfolio','ProjectController@index')->name('projects.index');
+Route::get('/portfolio/crear','ProjectController@create')->name('project.create');
+Route::get('/portfolio/{project}/editar','ProjectController@edit')->name('project.edit');
+Route::patch('/portfolio/{project}','ProjectController@update')->name('project.update');
+Route::post('/portfolio','ProjectController@store')->name('projects.store');
+Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
+Route::delete('portfolio/{project}', 'ProjectController@destroy')->name('project.destroy');
+```
+Listando las rutas por nombre se ve asi:
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l --name=project
++--------+----------+----------------------------+-----------------+------------------------------------------------+------------+
+| Domain | Method   | URI                        | Name            | Action                                         | Middleware |
++--------+----------+----------------------------+-----------------+------------------------------------------------+------------+
+|        | GET|HEAD | portfolio                  | projects.index  | App\Http\Controllers\ProjectController@index   | web        |
+|        | POST     | portfolio                  | projects.store  | App\Http\Controllers\ProjectController@store   | web        |
+|        | GET|HEAD | portfolio/crear            | project.create  | App\Http\Controllers\ProjectController@create  | web        |
+|        | PATCH    | portfolio/{project}        | project.update  | App\Http\Controllers\ProjectController@update  | web        |
+|        | GET|HEAD | portfolio/{project}        | projects.show   | App\Http\Controllers\ProjectController@show    | web        |
+|        | DELETE   | portfolio/{project}        | project.destroy | App\Http\Controllers\ProjectController@destroy | web        |
+|        | GET|HEAD | portfolio/{project}/editar | project.edit    | App\Http\Controllers\ProjectController@edit    | web        |
++--------+----------+----------------------------+-----------------+------------------------------------------------+------------+
+```
+OK, como vemos en la **URI** *porfolio/* es igual en todos, de igual forma los parametros **{projetc}**, los controladores **ProjectController** y por último los nombres **project.** (En nuestro caso hay nombres que tienen una **S** al final vamos aquitarlo y dejarlo estandar, para eso tambien se tiene que modificar donde se hacen referencia a esta ruta, **nav.create,edit,show**).
+
+Que todo este normalizado podemos utilizar **resource** para agrupar todo, de esta forma le decimos que la ruta es **portfolio** del controlador **ProjectController**.
+```php
+Route::resource('portfolio', 'ProjectController');
+```
+Hasta aqui si lo listamos filtrando por nombre **project** no nos va a arrojar nada.
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l --name=project
+Your application doesn't have any routes matching the given criteria.
+```
+Pero si lo filtramos por **portfolio** nos muestra las rutas, esto pasa por que toma como nombre de ruta el nombre que le estamos pasando en la **URI** y como vemos también en los parámetros toma el mismo nombre, si lo dejamos así va a fallar porque no son las variables que buscamos en la vista o en los controladores
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l --name=portfolio
++--------+-----------+------------------------------+-------------------+------------------------------------------------+------------+
+| Domain | Method    | URI                          | Name              | Action                                         | Middleware |
++--------+-----------+------------------------------+-------------------+------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio                    | portfolio.index   | App\Http\Controllers\ProjectController@index   | web        |
+|        | POST      | portfolio                    | portfolio.store   | App\Http\Controllers\ProjectController@store   | web        |
+|        | GET|HEAD  | portfolio/crear              | portfolio.create  | App\Http\Controllers\ProjectController@create  | web        |
+|        | GET|HEAD  | portfolio/{portfolio}        | portfolio.show    | App\Http\Controllers\ProjectController@show    | web        |
+|        | PUT|PATCH | portfolio/{portfolio}        | portfolio.update  | App\Http\Controllers\ProjectController@update  | web        |
+|        | DELETE    | portfolio/{portfolio}        | portfolio.destroy | App\Http\Controllers\ProjectController@destroy | web        |
+|        | GET|HEAD  | portfolio/{portfolio}/editar | portfolio.edit    | App\Http\Controllers\ProjectController@edit    | web        |
++--------+-----------+------------------------------+-------------------+------------------------------------------------+------------+
+```
+Para solucionar esto le decimos que como parámetro se cambia de **portfolio** a **project** y el nombre de las rutas va hacer **project**.
+```php
+Route::resource('portfolio', 'ProjectController')->parameters(['portfolio' => 'project'])->names('project');
+```
+Con esto listando nuevamente las rutas filtrandolo por el nombre **project** nos quedaria las rutas como cuando lo teniamos antes.
+```console
+C:\wamp64\www\intro_laravel>php artisan r:l --name=project
++--------+-----------+----------------------------+-----------------+------------------------------------------------+------------+
+| Domain | Method    | URI                        | Name            | Action                                         | Middleware |
++--------+-----------+----------------------------+-----------------+------------------------------------------------+------------+
+|        | GET|HEAD  | portfolio                  | project.index   | App\Http\Controllers\ProjectController@index   | web        |
+|        | POST      | portfolio                  | project.store   | App\Http\Controllers\ProjectController@store   | web        |
+|        | GET|HEAD  | portfolio/crear            | project.create  | App\Http\Controllers\ProjectController@create  | web        |
+|        | GET|HEAD  | portfolio/{project}        | project.show    | App\Http\Controllers\ProjectController@show    | web        |
+|        | PUT|PATCH | portfolio/{project}        | project.update  | App\Http\Controllers\ProjectController@update  | web        |
+|        | DELETE    | portfolio/{project}        | project.destroy | App\Http\Controllers\ProjectController@destroy | web        |
+|        | GET|HEAD  | portfolio/{project}/editar | project.edit    | App\Http\Controllers\ProjectController@edit    | web        |
++--------+-----------+----------------------------+-----------------+------------------------------------------------+------------+
+```
+***Nuevamente si llega a fallar es por que las rutas no coinciden y tenemos que verificar de que vista (archivo) se trata.***
+
+Por último las rutas quedarian de la siguiente forma:
+```php
+<?php
+
+Route::view('/','home')->name('inicio');
+Route::view('/about','about')->name('acerca');
+
+Route::resource('portfolio', 'ProjectController')->parameters(['portfolio' => 'project'])->names('project');
+
+Route::view('/contact','contact')->name('contacto');
+Route::post('contact','MessageController@store')->name('messages.store');
+```

@@ -2383,3 +2383,78 @@ Por último se nos estaba pasando incluir en el archivo **_form** el **@csrf** y
 @endsection
 ```
 Y con esto ya tenemos los valores iguales separados en diferentes archivos, esto hace que este un poco mas ordenado el código.
+
+### Eliminado registros
+Para eliminar un registro vamos a crear un botón en el archivo **show** que estará dentro de un formulario.
+```php
+@section('content')
+    <h1>{{$project->title}}</h1>
+    <a href="{{route('project.edit',$project)}}">Editar</a>
+    <form action="{{route('project.destroy',$project)}}" method="POST">
+        @csrf @method('DELETE')
+        <button>Eliminar</button>
+    </form>
+    <p>{{$project->description}}</p>
+    <p>{{$project->created_at->diffForHumans()}}</p>
+@endsection
+```
+Como vimos es necesario incluir **@csrf** y como habiamos dicho tenemos que declarar el método a utilizar **@method('DELETE')**, y la ruta en este caso hacemos referencia a **project.destroy**.
+Vamos a crear la ruta que como digimos va a ser de tipo **delete** y hacemos referencia al método **destroy**.
+```php
+Route::delete('portfolio/{project}', 'ProjectController@destroy')->name('project.destroy');
+```
+Vamos a crear el método en el controlador y de la instancia del proyecto vamos a inlcuirle el método **->delete** y con esto laravel sabe que queremos eliminar el proyecto.
+```php
+public function destroy(Project $project){
+   $project->delete();
+   return redirect()->route('projects.index');
+}
+```
+#### ¿ Pero porque asi de sencillo?
+Ok, todo esta bajo la convención de laravel y esto sucede por que estamos explotando el **Route Model Binding**.
+
+***El route model binding es un mecanismo que llamamos "de conveniencia", básicamente es para "auto-inyectar" instancias de algún modelo usando las rutas de Laravel***. 
+
+Ejemplo en el caso de la función **destroy()** que acabamos de hacer inyectamos el modelo **proyect** en la función por que en la ruta lo estamos pasando como el nombre del modelo.
+```php
+Route::delete('portfolio/{project}', 'ProjectController@destroy')->name('project.destroy');
+```
+Y en el controlador lo estamos recibiendo de la misma manera.
+```php
+public function destroy(Project $project)
+```
+Entonces hasta este punto laravel sabe que estamos haciendo referencia al modelo **project** o en otras palabras sabe que estamos haciendo rerefencia a la tabla **projects** de nuestra base de datos. 
+
+Y cuando utilizamos el método **delete()** primero lo estamos tomando de la instancia del modelo **project**.
+```php
+$project->delete();
+```
+Que este a su ves lo esta tomando de la extensión **Model**.
+```php
+class Project extends Model{
+   protected $guarded = [];
+   public function getRouteKeyName(){
+      return 'url';
+   }
+}
+```
+Y dentro de este **Model** esta la función **delete()** que lo primero que hace es buscar si existe **getKeyName**.
+```php
+public function delete(){
+   if (is_null($this->getKeyName())) {
+      throw new Exception('No primary key defined on model.');
+   }
+}
+```
+El **getKeyName** proviene de una función que esta retornando el **primaryKey**.
+```php
+public function getKeyName(){
+   return $this->primaryKey;
+}
+```
+Y aqui esta el secreto el **primaryKey** esta declarado con el **id**.
+```php
+protected $primaryKey = 'id';
+```
+Lo que quiere decir que al llamar el método **delete()** hace todo este proceso y por último determina que tiene que eliminar el proyecto con el id que se le esta pasando.
+NOTA: para que esto funcione la tabla **projects** debe de tener su **primaryKey** como **id** de no ser asi en el modelo se debe especificar como se llama el **primaryKey** ya que como vimos para eliminar hace referencia al **primaryKey**.

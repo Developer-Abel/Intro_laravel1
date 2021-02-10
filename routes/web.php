@@ -10,6 +10,8 @@ Route::patch('/portfolio/{project}','ProjectController@update')->name('project.u
 Route::post('/portfolio','ProjectController@store')->name('projects.store');
 Route::get('/portfolio/{project}','ProjectController@show')->name('projects.show');
 
+Route::delete('portfolio/{project}', 'ProjectController@destroy')->name('project.destroy');
+
 Route::view('/contact','contact')->name('contacto');
 Route::post('contact','MessageController@store')->name('messages.store');
 

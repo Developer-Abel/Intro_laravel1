@@ -37,4 +37,9 @@ class ProjectController extends Controller{
         $project->update( $request->validated() );
         return redirect()->route('projects.show', $project);
     }
+
+    public function destroy(Project $project){
+        $project->delete();
+        return redirect()->route('projects.index');
+    }
 }

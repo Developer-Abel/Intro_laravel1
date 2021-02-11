@@ -22,9 +22,10 @@ class MessageController extends Controller{
       ]
    );
 
-   // Mail::to('abel@gmail.com')->queue(New MessageReceived($message));
-   return new MessageReceived($message);
-      return "Mensaje enviado";
+   Mail::to('abel@gmail.com')->queue(New MessageReceived($message));
+
+   return back()->with('status', 'Recibimos tu mensaje, te responderemos en 24 horas');
+
    }
 }
 

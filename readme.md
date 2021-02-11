@@ -2544,3 +2544,79 @@ Route::resource('portfolio', 'ProjectController')->parameters(['portfolio' => 'p
 Route::view('/contact','contact')->name('contacto');
 Route::post('contact','MessageController@store')->name('messages.store');
 ```
+### Mensajes de sesión
+Los mensajes de sesión son los que se muestra al realizar una acción, también conocidas como mensajes flash ya que desaparecen con la siguiente petición (al recargar).
+La sesión es un tipo ede almacenamiento temporal donde guardamos información del usuario, soporta varios drivers y para verlo esta en **config/session.php** como esta en modo prueba las sesiones los esta guardando en un archivo, pero puede utilizar **BD, redis, array etc**.
+
+Bien vamos a utilizarlo primero en el controlador de contacto, para que cuando enviemos un email nos rediriga en este caso al mismo formulario (**back()**) y nos muestre un mensaje, para mostrar el mensaje primero le damos un nombre de la variable y después el mensaje dentro del método **with**.
+```php
+class MessageController extends Controller{
+   function store(Request $request){
+      $message = request()->validate([....]);
+
+   Mail::to('abel@gmail.com')->queue(New MessageReceived($message));
+
+   return back()->with('status', 'Recibimos tu mensaje, te responderemos en 24 horas');
+
+   }
+}
+```
+Ahora para mostrar el mensaje tenemos que hacerlo en el formulario de contacto ya que con el método **back()** nos redirige alli, lo validamos en un if con el nombre de la variable que le dimos en este caso **status**.
+```php
+@section('content')
+   <h1>contacto</h1>
+   
+   @if (session('status'))
+       {{session('status')}}
+   @endif
+
+   @if ($errors->any())
+      {{var_dump($errors->all())}}
+   @endif
+   <form action="{{route('messages.store')}}" method="POST">
+      ....
+   </form>
+@endsection
+```
+Pero viendolo bien estos mensajes de errores lo vamos a utilizar en casi todas las vista, cuando registremos, actualicemos o eliminemos un registro y va hacer tedioso mostrar los mensajes en cada archivo, mejor el mensaje lo convertimos en un archivo parcial y lo incluimos de bajo del **nav** para que sea visible en todos los archivo.
+
+creamos el archivo **partials/session-message**
+```php
+@if (session('status'))
+    {{session('status')}}
+@endif
+```
+Lo incluimos de bajo del **nav** que esta en el archivo **plantilla**.
+```php
+<body>
+   @include('partials.nav')
+
+   @include('partials.session-message')
+
+   @yield('content')
+</body>
+```
+
+Y con esto tendriamos los mensajes de acción a la vista de cualquier archivo.
+Ahora vamos a ponerle mensaje de sesión de las demas acciones.
+```php
+public function store(SaveProyectRequest $request){
+      Project::create($request->validated());
+      return redirect()->route('project.index')->with('status', 'El proyecto fue creado con éxito');
+   }
+   public function edit(Project $project){ ... }
+
+   public function update(Project $project, SaveProyectRequest $request){
+      $project->update( $request->validated() );
+      return redirect()->route('project.show', $project)->with('status', 'El proyecto fue actualizado con éxito');
+   }
+
+   public function destroy(Project $project){
+      $project->delete();
+      return redirect()->route('project.index')->with('status', 'El proyecto fue eliminado con éxito');
+   }
+}
+```
+
+
+

@@ -11,6 +11,8 @@
    <body>
       @include('partials.nav')
 
+      @include('partials.session-message')
+
       @yield('content')
    </body>
 </html>

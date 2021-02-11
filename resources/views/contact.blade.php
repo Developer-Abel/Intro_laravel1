@@ -4,8 +4,7 @@
 
 @section('content')
    <h1>contacto</h1>
-   {{--  {{$errors}}  --}}
-   {{--  {{var_dump($errors->any())}}  --}}
+   
    @if ($errors->any())
       {{var_dump($errors->all())}}
    @endif

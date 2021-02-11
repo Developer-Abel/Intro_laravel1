@@ -8,3 +8,7 @@ Route::resource('portfolio', 'ProjectController')->parameters(['portfolio' => 'p
 Route::view('/contact','contact')->name('contacto');
 Route::post('contact','MessageController@store')->name('messages.store');
 
+
+Auth::routes(['register' => false]);
+
+Route::get('/home', 'HomeController@index')->name('home');

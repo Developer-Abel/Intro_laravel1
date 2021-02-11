@@ -2617,6 +2617,140 @@ public function store(SaveProyectRequest $request){
    }
 }
 ```
+### Login y Register
+Con el comando **auth** laravel nos crea en el archivo de rutas **Auth::routes();** que internamente contiene los métodos: 
+```
+GET  /login     = Para mostrar el formulario del login
+POST /login     = Donde se envía el formulario del login
+POST /logout    = Para cerrar sesión
+GET  /registrer = Para mostrar el formulario de registro
+POST /registrer = Donde se envía el formulario de registro
+```
+Nos crea otras rutas para la contraseña pero por el momento no nos interesa, tambien nos crea unas vistas que vamos a verlos.
+Ejecutamos el comando, como ya tenemos un archivo que se llama **home** nos pregunta queremos reemplazarlo, en nuestro caso vamos a decirle que no.
+```console
+C:\wamp64\www\intro_laravel>php artisan make:auth
+
+ The [home.blade.php] view already exists. Do you want to replace it? (yes/no) [no]:
+ > no
+
+Authentication scaffolding generated successfully.
+```
+Ahora si nos vamos a la ruta **http://localhost:8000/register** e intentamos registrarnos (en mi caso ocurrio un error por que cuando hice las migraciones en el email le puse como longitud 6 caracteres, lo modifique y listo) nos va a regirigir a la vista home, ya que asi esta determinado en el archivo.
+
+En el archivo de rutas esta asi:
+```php
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+```
+Por el momento vamos a quira la ruta **home** por que ya tenemos uno, de igual forma eliminamos su controlador.
+Nos vamos a **controller/auth/RegisterController.php** y modificamos esta linea **protected $redirectTo = '/home';** ya que es la que nos redirecciona despues de registrarse.
+```php
+protected $redirectTo = '/';
+```
+Lo mismo en el LoginController **protected $redirectTo = '/home';** ya que nos redirecciona al home despues de hacer login.
+```php
+protected $redirectTo = '/';
+```
+#### auth()->user()
+Con el metodo **auth()** nos devuelve un objeto con los datos del usuario, vamos a poner el nombre nadamas en la vista home.
+```php
+@section('content')
+    <h1>home</h1>
+    {{auth()->user()->name}}
+@endsection
+```
+Por el momento para cerrar sesión vamos a vaciar la carpeta **storage/framework/sessions** y cuando recargamos vemos que nos arroja un error por que estamos llamando a un objeto que no existe.
+
+#### @auth
+Vamos a utilizar esta directiva para que nos muestre el usuario solo si esta autenticado.
+```php
+@section('content')
+    <h1>home</h1>
+    @auth
+        {{auth()->user()->name}}
+    @endauth
+@endsection
+```
+Ahora vamos a crear un link para que nos redirija al **login**, esto lo hacemos en el archivo nav.
+```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="{{route('acerca')}}">About</a></li>
+       <li class="{{setActive('project.*')}}"><a href="{{route('project.index')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{route('contacto')}}">Contacto</a></li>
+       <li> <a href="{{route('login')}}">Login</a> </li>
+    </ul>
+ </nav>
+ ```
+ Y si nos logeamos ya nos redirige a la raiz.
+ Si nos damos cuenta sigue apareciendo la ruta **login** en el **nav** y si le damos click nos redirecciona al **home** para cambiar la ruta nos vamos a **app/http/Middleware/RedirectifAutenticated.php** y modificamos el return **return redirect('/home');**.
+ ```php
+if (Auth::guard($guard)->check()) {
+   return redirect('/');
+}
+```
+#### @guest
+Como ya estamos autenticados no debe de aparecer la ruta **login** en el **nav**, para esto vamos a utilizar **@guest** que hace lo contrario al **@auth** por que solo se muestra si estamos como invitado (si no estamos logeados).
+```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="{{route('acerca')}}">About</a></li>
+       <li class="{{setActive('project.*')}}"><a href="{{route('project.index')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{route('contacto')}}">Contacto</a></li>
+       @guest
+         <li> <a href="{{route('login')}}">Login</a> </li>
+       @endguest
+    </ul>
+ </nav>
+ ```
+ Por último vamos a crear un boton para cerra sesión, vamos a copiarlo de **views/layouts/app.blade.php**, ya que hace la misma función primero nos copiamos el form.
+ ```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="{{route('acerca')}}">About</a></li>
+       <li class="{{setActive('project.*')}}"><a href="{{route('project.index')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{route('contacto')}}">Contacto</a></li>
+       @guest
+         <li> <a href="{{route('login')}}">Login</a> </li>
+       @endguest
+
+      <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+      </form>
+    </ul>
+ </nav>
+```
+Después creamos nuestro botón y le añadimos javascrip para que se ejcute la acción del formulario al dar click, a parte de eso validamos que cuando no este como invitado (cuando no este logeado) que aparesca el link de **cerrar sesión** y esto se logra solamente dandole un **@else** al **@guest**.
+```php
+<nav>
+    <ul>
+       <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>
+       <li class="{{setActive('acerca')}}"><a href="{{route('acerca')}}">About</a></li>
+       <li class="{{setActive('project.*')}}"><a href="{{route('project.index')}}">Portafolio</a></li>
+       <li class="{{setActive('contacto')}}"><a href="{{route('contacto')}}">Contacto</a></li>
+       @guest
+         <li> <a href="{{route('login')}}">Login</a> </li>
+       @else
+       <li> <a href="#" onclick="event.preventDefault();
+         document.getElementById('logout-form').submit();">Cerrar Sesión</a></li>
+       @endguest
+
+      <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+      </form>
+    </ul>
+ </nav>
+ ```
+Listo solo nos falta desabilitar la ruta **register** ya que si no todos van a poder registrarse, esto se hace en el archivo de rutas.
+```php
+Auth::routes(['register' => false]);
+``` 
+Y con esto cuando ingresemos a la ruta **http://localhost:8000/register** nos arrojara un error 404.
 
 
 

@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 use App\Http\Requests\SaveProyectRequest;
 
 class ProjectController extends Controller{
+    public function __construct(){
+        $this->middleware('auth')->except('index','show');
+    }
     public function index(){
         $proyectos = Project::latest()->paginate();
         return view('projects.index', compact('proyectos'));
     }
     public function show(Project $project){
-        // $project = Project::findOrFail($id);
         return view('projects.show',[
             'project' => $project
         ]);

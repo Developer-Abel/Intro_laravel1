@@ -2752,5 +2752,59 @@ Auth::routes(['register' => false]);
 ``` 
 Y con esto cuando ingresemos a la ruta **http://localhost:8000/register** nos arrojara un error 404.
 
+### Middlewares
+Los middleares sirven para filtrar peticiones http, en este caso necesitamos que intercepte la petición de un usuario y verifique si esta autenticado para poder crear, eliminar, y editar proyectos.
+Existen varias formas de inlcuir un midleware, podemos incluirlo directamente en la ruta.
+```php
+Route::resource('portfolio', 'ProjectController')
+->parameters(['portfolio' => 'project'])->names('project')->middleware('auth');
+```
+Pero esta restringiria a todas las rutas aun que podemos definir las rutas que solo se quieren protejer, pero tambien lo podemos inluir en el constructor del controlador y definir los métodos a protejer.
+```php
+class ProjectController extends Controller{
+   public function __construct(){
+      $this->middleware('auth')->only('create','edit','destroy', 'update');
+   }
+}
+```
+O podemos declarar que métodos son los que no van a tener el middleware.
+```php
+public function __construct(){
+   $this->middleware('auth')->except('index','show');
+}
+```
+Con esto los que no esten autenticados podran acceder al listado y detalle de proyectos, pero como no pueden crear ni editar o eliminarlos mejor vamos a ocultar los botones cuando no esten autenticados.
+en el archivo **index** validamos que el botón de **prear proyecto** se visualice solo si esta autenticado, para eso utilizamos la directiva **@auth** de blade.
+```php
+@section('content')
+   <h1>Portafolio</h1>
+      @auth
+         <a href="{{route('project.create')}}">Nuevo proyecto</a>
+      @endauth
+      <br>
+      @forelse ($proyectos as $proyecto)
+      <li><a href="{{route('project.show',$proyecto)}}">{{$proyecto->title}}</a></li>
+      @empty
+         <li>No hay proyectos</li>
+      @endforelse
+      {{$proyectos->links()}}
+@endsection
+```
+De igual forma para los botones de editar y eliminar que estan en el archivo **show**.
+```php
+@section('content')
+    <h1>{{$project->title}}</h1>
+    @auth
+        <a href="{{route('project.edit',$project)}}">Editar</a>
+        <form action="{{route('project.destroy',$project)}}" method="POST">
+            @csrf @method('DELETE')
+            <button>Eliminar</button>
+        </form>
+    @endauth
+    <p>{{$project->description}}</p>
+    <p>{{$project->created_at->diffForHumans()}}</p>
+@endsection
+```
+Listo solo podran editar, eliminar y actualizar proyectos cuandso esten autenticados.
 
 

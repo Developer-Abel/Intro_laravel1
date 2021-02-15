@@ -2807,4 +2807,227 @@ De igual forma para los botones de editar y eliminar que estan en el archivo **s
 ```
 Listo solo podran editar, eliminar y actualizar proyectos cuandso esten autenticados.
 
+### Introducción a Laravel Mix
+Como vimos laravel ya trae archivos **css** cargados, es por eso que cuando nos redirecciona al login tiene un diseño por default, los archivos de **css** y **js** estan en la carpeta **public/css/app.css** y **public/js/app.js** y en los 2 casos esta minificados para que pesen menos.
+Para poder utilizar estos archivos lo debemos de incluir a nuestra plantila.
+```php
+<head>
+   <title>@yield('title','default')</title>
+   <link rel="stylesheet" href="/css/app.css">
+   <style>
+      .active a{
+         color: red;
+         text-decoration:none;
+      }
+   </style>
+</head>
+<body>
+   ...
+</body>
+```
+Si recargamos el navegador vemos que cambia de estilo por que en el css esta integrado boostrap 4, podemos hacer lo mismo con javascript y le agregamos **defer** para que se ejecute al final de la carga.
+```php
+<head>
+   <title>@yield('title','default')</title>
+   <link rel="stylesheet" href="/css/app.css">
+   <script src="/js/app.js" defer></script>
+   <style>
+      .active a{
+         color: red;
+         text-decoration:none;
+      }
+   </style>
+</head>
+```
+Ahora como ya tenemos un arhivo **css**  podemos agrear los estilos que tenemos en la plantilla (los que colorean los links) pero como estamos haciendo al archivo que esta minificado no es buena idea, ya que para minificarlo debe de existir un archivo de donde toma ese código para minificarlo y el archivo se encuentra en **resources/sass/app.scss**, aqui agregamos nuestro estilo.
+```css
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Nunito');
 
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
+
+.active a{
+    color: red;
+    text-decoration:none;
+ }
+```
+Pero si recargamos la página se pierden los cambios y esto pasa por que como estamos en el archivo fuente se tiene que compilar para que se guarde en el archivo minificado (ya que el archivo minificado es el que estamos haciendo referencia en nuestra plantilla).
+Para compilarlo utilizamos Laravel Mix que nos proporciona una API fluida para definir los paso de compilación de Webpack de nuestra aplicación Laravel utilizando varios procesadores de CSS y JavaScript.
+El archivo de webpack mix se llama **webpack.mix.js** y se encuentra en la raiz, en este archivo nos muestra el archivo con el código fuente y el archivo minificado.
+```js
+mix.js('resources/js/app.js', 'public/js')
+    .sass('resources/sass/app.scss', 'public/css');
+```
+Bueno vamos a compilar para que tome los estilos que definimos en el archivo **app.scss** y para eso debemos tener instalado **node** (ya lo tengo) y con esto tenemos **npm** pero en esta ocación vamos a utilizar **yarn** vamos a instalarlo.
+```console
+C:\wamp64\www\intro_laravel>npm install -global yarn
+
+> yarn@1.22.10 preinstall C:\Users\USUARIO\AppData\Roaming\npm\node_modules\yarn
+> :; (node ./preinstall.js > /dev/null 2>&1 || true)
+
+C:\Users\USUARIO\AppData\Roaming\npm\yarnpkg -> C:\Users\USUARIO\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
+C:\Users\USUARIO\AppData\Roaming\npm\yarn -> C:\Users\USUARIO\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
++ yarn@1.22.10
+added 1 package in 3.104s
+```
+Ahora vamos a instalar las dependencias de laravel  para el frond-end es decir las dependencias definidas en que esta en el **package.json**
+```json
+"devDependencies": {
+        "axios": "^0.19",
+        "bootstrap": "^4.1.0",
+        "cross-env": "^5.1",
+        "jquery": "^3.2",
+        "laravel-mix": "^4.0.7",
+        "lodash": "^4.17.13",
+        "popper.js": "^1.12",
+        "resolve-url-loader": "^2.3.1",
+        "sass": "^1.15.2",
+        "sass-loader": "^7.1.0",
+        "vue": "^2.5.17"
+    }
+```
+Esto se hace con el siguiente comado
+```console
+C:\wamp64\www\intro_laravel>yarn
+yarn install v1.22.10
+info No lockfile found.
+[1/4] Resolving packages...
+```
+Vemos que nos crea una nueva carpeta llamada **node_modules** aqui es donde se van a guardar todas las dependencias.
+Ahora si vamos a compilar.
+```console
+C:\wamp64\www\intro_laravel>yarn dev
+yarn run v1.22.10
+$ npm run development
+
+> @ development C:\wamp64\www\intro_laravel
+```
+Si recargamos ya podemos ver los cambios, si aun no toma los estilos podemos hacer lo siguiente **crtl + shift + R** para vaciar el cahé del navegador.
+
+#### Importante
+Al ejecutar el comando **npm install** me genero un error de **yargs**  y esto era por que debe de estar instalado la ultima versión asi que segui estos pasos.
+```
+El problema principal es que el yargs-parserpaquete contiene una vulnerabilidad y la versión posterior no, pero el yargspaquete aún requiere la versión anterior, por lo que para este error básicamente podemos resolverlo forzando yargsa usar la última versión de la yargs-parserque es en el 18.1.3lugar de 18.1.2.
+
+así que primero puede agregar estas líneas a su package.jsonarchivo.
+
+Agregue esta línea a su scriptssección
+"preinstall": "npx npm-force-resolutions"
+como se muestra aquí:
+imagen
+Agregue una nueva clave a su package.jsonarchivo llamado resolutionsy agregue una nueva línea con la versión apropiada de yargs-parser
+"resolutions": { "yargs-parser": "^18.1.3" }
+como se muestra aquí:
+imagen
+Ejecutar el npm install yargs-parser --save-dev && npm update && npm install
+y voilà, está establecido para usar laravel-mix nuevamente como estaba previsto.
+```
+Y listo con esto solucione el problema, otra cosa a mi el comando **yarn dev** no me funcionó y lo sustitui por **npm dev**.
+
+Ahora para no tener todo amontonado en el archivo **app.js** hice otro archivo **resources/sass/style.scss** y aqui ingrese el estilo de colorear los links cuando esten activos.
+```css
+/* archivo style.scss */
+.active a {
+    color: red;
+    text-decoration: none;
+}
+```
+y en el archivo **resources/sass/app.scss** lo importe.
+```css
+// Fonts
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+// Variables
+@import 'variables';
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
+@import 'style.scss';
+```
+y volvi a correr **npm dev**.
+
+De igual forma con los archivos js, hice un archivo **resources/js/script.js** y por el momento solo le puse un alert.
+```javascript
+alert('hola mundo');
+```
+y lo inclui en el archivo **resources/js/app.js**
+```javascript
+require('./bootstrap');
+require('./script')
+```
+Nuevamente corremos el comando **npm dev** y si recargamos la página vemos el alert.
+
+Pero estar corriendo el mismo comando cada ves que hay un cambio es fastidioso, para eso tenemos el comando.
+```console
+> @ development C:\wamp64\www\intro_laravel
+> cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js "--watch"
+```
+
+Y son esto nos va a compilar automaticamnete cada cuando tengamos un cambio.
+
+Existe una forma de que los cambios se refleje automáticamente sin recargar la pagina y eso se logra incluyendo este código en **webpack.mix.js**
+```javascript
+mix.browserSync('http://localhost:8000');
+```
+Después se tiene  que ejecutar  **watch**, esto hara que se ejecute la linea que acabamos de agregar e instalará la dependencia.
+```console
+C:\wamp64\www\intro_laravel>npm run watch
+
+> @ watch C:\wamp64\www\intro_laravel
+> npm run development -- --watch
+
+
+> @ development C:\wamp64\www\intro_laravel
+> cross-env NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js "--watch"
+
+        Additional dependencies must be installed. This will only take a moment.
+
+        Running: npm install browser-sync browser-sync-webpack-plugin@2.0.1 --save-dev --production=false
+```
+Y nuevamente corremos el **watch** para que inicie y podemos ver que al realizar un cambio la pagina se recarga solo de igual forma nos abre una nueva pestaña en un puerto 3000.
+
+Bien en el archivo **public/css/app.css** aún no estan minificado y esto por que no estamos en producción, si ya lo vamos a pasar a produción ejecutamos el comando.
+```console
+npm run prod
+```
+Y asi los archivos estan listos para producción.
+
+Ahora existe un problema, por que cada cuando implementamos este comando internamente se le da un nombre diferente al archivo **public/css/app.css** esto por que laravel asume que es el mismo archivo y lo guarda en caché, y entonces cada cuando realicemos la minificación debemos de cambiar el nombre en el link de la plantilla.
+
+Pero hay una forma de solucionarlo, en el archivo **webpack.mix.js** preguntamos si estamos en producción.
+```javascript
+if(mix.inProduction()){
+    mix.version();
+}
+```
+Y ya solo en nuestra plantilla utilizamos la referencia mix para llamar al archivo.
+```php
+<head>
+   <title>@yield('title','default')</title>
+   <link rel="stylesheet" href="{{mix('css/app.css')}}">
+   <script src="{{mix('js/app.js)'}}" defer></script>
+</head>
+```
+Volvemos a correr **npm run prod**
+```console
+C:\wamp64\www\intro_laravel>npm run prod
+
+> @ prod C:\wamp64\www\intro_laravel
+> npm run production
+
+
+> @ production C:\wamp64\www\intro_laravel
+> cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --no-progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js
+
+
+
+ DONE  Compiled successfully in 62583ms                           21:24:25
+
+       Asset     Size  Chunks                    Chunk Names
+/css/app.css  143 KiB       0  [emitted]         /js/app
+  /js/app.js  352 KiB       0  [emitted]  [big]  /js/app
+```
+
+Si inspeccionamos la página vemos que el archivo que estamos llamado cambia de es **app** mas **serie de carácteres** y con esto tenemos sincronizado las minificaciones.

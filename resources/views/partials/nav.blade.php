@@ -1,3 +1,4 @@
+
 <nav>
     <ul>
        <li class="{{setActive('inicio')}}"><a href="{{route('inicio')}}">Home</a></li>

@@ -3031,3 +3031,99 @@ C:\wamp64\www\intro_laravel>npm run prod
 ```
 
 Si inspeccionamos la página vemos que el archivo que estamos llamado cambia de es **app** mas **serie de carácteres** y con esto tenemos sincronizado las minificaciones.
+
+### Diseño con Bootstrap
+Se quito el boostrap que tenia y se instralo uno mas reciente.
+
+```console
+C:\wamp64\www\intro_laravel>npm remove bootstrap
+[..................] / rollbackFailedOptional: verb npm-session 2df7994296bf4d14
+```
+```console
+C:\wamp64\www\intro_laravel>npm install bootstrap@4.3.* --dev
+npm WARN install Usage of the `--dev` option is deprecated. Use `--only=dev` instead.
+npm WARN browser-sync-webpack-plugin@2.0.1 requires a peer of webpack@^1 || ^2 || ^3 but none is in
+```
+
+#### plantilla
+Se puso la escala y el csrf (que no se utiliza pero se puso para que no generara errores en la consola)
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+```
+Se creo un div para encerrar al header, main, y footer.
+```php
+<div id="app" class="d-flex flex-column h-screen justify-content-between"></div>
+```
+```php
+<header>
+   @include('partials.nav')
+   @include('partials.session-message')
+</header>
+
+<main>
+   @yield('content')
+</main>
+
+<footer class="bg-white text-black-50 text-center py-3 shadow">
+   {{config('app.name')}} | Copyright @ {{date('Y')}}
+</footer>
+```
+#### nav
+Se le puso las siguientes clase al nav
+```php
+<nav class="navbar navbar-light navbar-expand-lg bg-white shadow-sm">
+```
+En un container se copio el boton toggle de layout.app que viene por defecto en laravel.
+```php
+<a class="navbar-brand*" href="{{route('home')}}"> {{config('app.name')}}</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
+   <span class="navbar-toggler-icon"></span>
+</button>
+```
+
+La lista desordenada se guardo en un div con el  id que especifica el boton.
+```php
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+```
+
+Se le agregaron estas clases a los elementos.
+```php
+<ul class="nav nav-pills">
+<li class="nav-item ">
+   <a class="nav-link {{setActive('inicio')}}" href="{{route('inicio')}}">Home</a>
+</li>
+</ul>
+```
+
+#### contacto
+Se le agregaron estos divs y estas clases al formulario de contacto
+```php
+<div class="container">
+   <div class="row">
+      <div class="col-12 col-sm-10 col-lg-10 mx-auto">
+         <form class="bg-white shadow rounded py-3 px-4" action="{{route('messages.store')}}" method="POST">
+         </form>
+      </div>
+   </div>
+</div>
+```
+Y a todos los inputs se le modifico de esta manera.
+```php
+<div class="form-group">
+   <label for="name">Nombre</label>
+   <input class="form-control bg-light shadow-sm
+   @error('nombre') is-invalid @else border-0 @enderror" 
+   type="text" name="nombre" id="name" placeholder="nombre">
+   @error('nombre')
+         <span class="invalid-feedback" role="alert">
+            <strong>{{$message}}</strong>
+         </span>
+   @enderror
+</div>
+```
+
+A todas las vistas donde extiende de **layout.app** se le cambio por.
+```php
+@extends('plantilla')
+```

@@ -12,4 +12,4 @@ Route::post('contact','MessageController@store')->name('messages.store');
 
 Auth::routes(['register' => false]);
 
-Route::get('/home', 'HomeController@index')->name('home');
+// Route::get('/home', 'HomeController@index')->name('home');

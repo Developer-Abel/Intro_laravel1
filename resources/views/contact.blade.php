@@ -9,6 +9,7 @@
             <form class="bg-white shadow rounded py-3 px-4" action="{{route('messages.store')}}" method="POST">
                @csrf
                <h1 class="display-4">contacto</h1>
+               <hr>
                <div class="form-group">
                   <label for="name">Nombre</label>
                   <input class="form-control bg-light shadow-sm

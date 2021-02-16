@@ -3127,3 +3127,17 @@ A todas las vistas donde extiende de **layout.app** se le cambio por.
 ```php
 @extends('plantilla')
 ```
+### Terminado diseño bootstrap 
+Hubieron muchos cambios de diseño solo voy a mencionar algunos que fueron relevantes.
+
+Esto se le agrega en **_variables.scss** para que los titulos se ajusten dependiendo del tamaño de la pantalla
+```css
+$enable-responsive-font-sizes:true;
+```
+```html
+<h1 class="display-4">Nuevo proyecto</h1>
+```
+Podemos también habilitar para que los botones sead degradientes (no se nota mucho).
+```css
+$enable-gradients:true;
+```
